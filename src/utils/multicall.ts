@@ -7,14 +7,9 @@ interface Call {
   params?: any[] // Function params
 }
 
-type LabelledCall = {
-  label: string
-  call: Call
-}
-
 type GroupLabelledCall = {
   label: string
-  call: Call[]
+  calls: Call[]
 }
 
 const multicall = async (multi: Contract, abi: any[], calls: Call[]) => {
@@ -27,25 +22,16 @@ const multicall = async (multi: Contract, abi: any[], calls: Call[]) => {
   return res
 }
 
-export const labelledMulticall = async (multi: Contract, abi: any[], calls: LabelledCall[]): Promise<Record<string, unknown>[]> => {
-  const itf = new Interface(abi)
-
-  const calldata = calls.map(l => [l.call.address.toLowerCase(), itf.encodeFunctionData(l.call.name, l.call.params)])
-  const { returnData } = await multi.methods.aggregate(calldata).call()
-  const res: Record<string, unknown>[] = []
-  returnData.forEach((l, i) => {
-    res[calls[i].label] = itf.decodeFunctionResult(calls[i].call.name, l.call)
-  })
-
-  return res
-}
-
-export const groupLabelledMulticall = async (multi: Contract, abi: any[], calls: GroupLabelledCall[]): Promise<Record<string, unknown>[]> => {
+export const groupLabelledMulticall = async (
+  multi: Contract,
+  abi: any[],
+  calls: GroupLabelledCall[],
+): Promise<Record<string, unknown>[]> => {
   const itf = new Interface(abi)
 
   const bp: Record<number, string> = {}
   calls.reduce((acc, c) => {
-    const cl = c.call.length
+    const cl = c.calls.length
     if (cl === 0) {
       return acc
     }
@@ -55,9 +41,16 @@ export const groupLabelledMulticall = async (multi: Contract, abi: any[], calls:
     return t
   }, 0)
 
-  const callNames = calls.flatMap(l => l.call.map(c => c.name))
-  const callIndexes = calls.flatMap(l => l.call.map((_c, i) => i))
-  const calldata = calls.flatMap(l => l.call.map(call => [call.address.toLowerCase(), itf.encodeFunctionData(call.name, call.params)]))
+  const callNames = calls.flatMap(l => l.calls.map(c => c.name))
+  const callIndexes = calls.flatMap(l => l.calls.map((_c, i) => i))
+  const calldata = calls.flatMap(
+    l => l.calls.map(
+      call => [
+        call.address.toLowerCase(),
+        itf.encodeFunctionData(call.name, call.params),
+      ]
+    )
+  )
   const { returnData } = await multi.methods.aggregate(calldata).call()
 
   const res: Record<string, unknown>[] = []
@@ -74,7 +67,8 @@ export const groupLabelledMulticall = async (multi: Contract, abi: any[], calls:
         break
       }
       if (nb >= returnData.length) {
-        // TODO: this should never happen but we should log error (didn't find breakpoint)
+        // TODO: this should never happen but we should log error (didn't find
+        // breakpoint)
         break
       }
       nb++

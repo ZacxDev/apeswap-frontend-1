@@ -15,7 +15,7 @@ const fetchFarms = async (chainId: number) => {
     const lpAdress = farmConfig.lpAddresses[chainId]
     return {
       label: farmConfig.pid.toString(),
-      call: [
+      calls: [
         // Balance of token in the LP contract
         {
           address: farmConfig.tokenAddresses[chainId],
@@ -58,7 +58,7 @@ const fetchFarms = async (chainId: number) => {
   const pidCalls = farmsConfig.map(f => {
     return {
       label: f.pid.toString(),
-      call: [
+      calls: [
         {
           address: masterChefAddress,
           name: 'poolInfo',
