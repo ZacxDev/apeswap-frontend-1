@@ -1,11 +1,11 @@
 import BigNumber from 'bignumber.js'
 import erc20 from 'config/abi/erc20.json'
-import { groupLabelledMulticall } from 'utils/multicall'
 import multicallABI from 'config/abi/Multicall.json'
 import { getMulticallAddress, getMasterChefAddress } from 'utils/addressHelper'
 import { getContract } from 'utils/web3'
 import masterchefABI from 'config/abi/masterchef.json'
 import { farmsConfig } from 'config/constants'
+import labelledGroupMulticall from 'utils/LabelledGroupMulticall'
 
 const fetchFarms = async (chainId: number) => {
   const multicallContractAddress = getMulticallAddress(chainId)
@@ -53,7 +53,7 @@ const fetchFarms = async (chainId: number) => {
     }
   })
 
-  const lpCalls = await groupLabelledMulticall(multicallContract, erc20, calls)
+  const lpCalls = await labelledGroupMulticall(multicallContract, erc20, calls)
 
   const pidCalls = farmsConfig.map(f => {
     return {
@@ -72,7 +72,7 @@ const fetchFarms = async (chainId: number) => {
     }
   })
   const infoCalls =
-    await groupLabelledMulticall(multicallContract, masterchefABI, pidCalls)
+    await labelledGroupMulticall(multicallContract, masterchefABI, pidCalls)
 
   const data = []
   farmsConfig.forEach(fc => {
