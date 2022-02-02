@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 import erc20 from 'config/abi/erc20.json'
-import multicall from 'utils/multicall'
+import { groupLabelledMulticall } from 'utils/multicall'
 import multicallABI from 'config/abi/Multicall.json'
 import { getMulticallAddress, getMasterChefAddress } from 'utils/addressHelper'
 import { getContract } from 'utils/web3'
@@ -11,10 +11,11 @@ const fetchFarms = async (chainId: number) => {
   const multicallContractAddress = getMulticallAddress(chainId)
   const multicallContract = getContract(multicallABI, multicallContractAddress, chainId)
   const masterChefAddress = getMasterChefAddress(chainId)
-  const data = await Promise.all(
-    farmsConfig.map(async (farmConfig) => {
-      const lpAdress = farmConfig.lpAddresses[chainId]
-      const calls = [
+  const calls = farmsConfig.map(farmConfig => {
+    const lpAdress = farmConfig.lpAddresses[chainId]
+    return {
+      label: farmConfig.pid.toString(),
+      call: [
         // Balance of token in the LP contract
         {
           address: farmConfig.tokenAddresses[chainId],
@@ -49,63 +50,70 @@ const fetchFarms = async (chainId: number) => {
           name: 'decimals',
         },
       ]
+    }
+  })
 
-      const [tokenBalanceLP, quoteTokenBlanceLP, lpTokenBalanceMC, lpTotalSupply, tokenDecimals, quoteTokenDecimals] =
-        await multicall(multicallContract, erc20, calls)
+  const lpCalls = await groupLabelledMulticall(multicallContract, erc20, calls)
 
-      // Ratio in % a LP tokens that are in staking, vs the total number in circulation
-      const lpTokenRatio = new BigNumber(lpTokenBalanceMC).div(new BigNumber(lpTotalSupply))
+  const pidCalls = farmsConfig.map(f => {
+    return {
+      label: f.pid.toString(),
+      call: [
+        {
+          address: masterChefAddress,
+          name: 'poolInfo',
+          params: [f.pid],
+        },
+        {
+          address: masterChefAddress,
+          name: 'totalAllocPoint',
+        },
+      ]
+    }
+  })
+  const infoCalls =
+    await groupLabelledMulticall(multicallContract, masterchefABI, pidCalls)
 
-      // Total value in staking in quote token value
-      const lpTotalInQuoteToken = new BigNumber(quoteTokenBlanceLP)
-        .div(new BigNumber(10).pow(18))
-        .times(new BigNumber(2))
-        .times(lpTokenRatio)
+  const data = []
+  farmsConfig.forEach(fc => {
+    const [tokenBalanceLP, quoteTokenBlanceLP, lpTokenBalanceMC, lpTotalSupply, tokenDecimals, quoteTokenDecimals] = lpCalls[fc.pid.toString()]
+    const [info, totalAllocPoint] = infoCalls[fc.pid.toString()]
 
-      // Total value in pool in quote token value
-      const totalInQuoteToken = new BigNumber(quoteTokenBlanceLP).div(new BigNumber(10).pow(18)).times(new BigNumber(2))
+    // Ratio in % a LP tokens that are in staking, vs the total number in circulation
+    const lpTokenRatio = new BigNumber(lpTokenBalanceMC).div(new BigNumber(lpTotalSupply))
 
-      // Amount of token in the LP that are considered staking (i.e amount of token * lp ratio)
-      const tokenAmount = new BigNumber(tokenBalanceLP).div(new BigNumber(10).pow(tokenDecimals)).times(lpTokenRatio)
-      const quoteTokenAmount = new BigNumber(quoteTokenBlanceLP)
-        .div(new BigNumber(10).pow(quoteTokenDecimals))
-        .times(lpTokenRatio)
+    // Total value in staking in quote token value
+    const lpTotalInQuoteToken = new BigNumber(quoteTokenBlanceLP)
+      .div(new BigNumber(10).pow(18))
+      .times(new BigNumber(2))
+      .times(lpTokenRatio)
 
-      let alloc = null
-      let multiplier = 'unset'
-      try {
-        const [info, totalAllocPoint] = await multicall(multicallContract, masterchefABI, [
-          {
-            address: masterChefAddress,
-            name: 'poolInfo',
-            params: [farmConfig.pid],
-          },
-          {
-            address: masterChefAddress,
-            name: 'totalAllocPoint',
-          },
-        ])
-        const allocPoint = new BigNumber(info.allocPoint._hex)
-        const poolWeight = allocPoint.div(new BigNumber(totalAllocPoint))
-        alloc = poolWeight.toJSON()
-        multiplier = `${allocPoint.div(100).toString()}X`
-        // eslint-disable-next-line no-empty
-      } catch (error) {
-        console.warn('Error fetching farm', error, farmConfig)
-      }
+    // Total value in pool in quote token value
+    const totalInQuoteToken = new BigNumber(quoteTokenBlanceLP).div(new BigNumber(10).pow(18)).times(new BigNumber(2))
 
-      return {
-        ...farmConfig,
-        tokenAmount: tokenAmount.toJSON(),
-        quoteTokenAmount: quoteTokenAmount.toJSON(),
-        totalInQuoteToken: totalInQuoteToken.toJSON(),
-        lpTotalInQuoteToken: lpTotalInQuoteToken.toJSON(),
-        tokenPriceVsQuote: quoteTokenAmount.div(tokenAmount).toJSON(),
-        poolWeight: alloc,
-        multiplier,
-      }
-    }),
-  )
+    // Amount of token in the LP that are considered staking (i.e amount of token * lp ratio)
+    const tokenAmount = new BigNumber(tokenBalanceLP).div(new BigNumber(10).pow(tokenDecimals)).times(lpTokenRatio)
+    const quoteTokenAmount = new BigNumber(quoteTokenBlanceLP)
+      .div(new BigNumber(10).pow(quoteTokenDecimals))
+      .times(lpTokenRatio)
+
+    const allocPoint = new BigNumber(info.allocPoint._hex)
+    const poolWeight = allocPoint.div(new BigNumber(totalAllocPoint))
+    const alloc = poolWeight.toJSON()
+    const multiplier = `${allocPoint.div(100).toString()}X`
+
+    data.push({
+      ...fc,
+      tokenAmount: tokenAmount.toJSON(),
+      quoteTokenAmount: quoteTokenAmount.toJSON(),
+      totalInQuoteToken: totalInQuoteToken.toJSON(),
+      lpTotalInQuoteToken: lpTotalInQuoteToken.toJSON(),
+      tokenPriceVsQuote: quoteTokenAmount.div(tokenAmount).toJSON(),
+      poolWeight: alloc,
+      multiplier,
+    })
+  })
+
   return data
 }
 
