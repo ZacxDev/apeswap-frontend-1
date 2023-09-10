@@ -1,58 +1,85 @@
+/** @jsxImportSource theme-ui */
 import React from 'react'
-import styled from 'styled-components'
+import { Flex, LinkExternal, Text } from '@ape.swap/uikit'
+import { useTranslation } from '../../contexts/Localization'
+import { styles } from './styles'
+import { BLOCK_EXPLORER } from '../../config/constants/chains'
+import useActiveWeb3React from '../../hooks/useActiveWeb3React'
+import { JungleFarm, Pool } from 'state/types'
+import JungleFarmsEndsIn from './JungleFarmsEndsIn'
+import ButtonsRow from './ButtonsRow'
+import PoolsEndsIn from './PoolsEndsIn'
 
 export interface TooltipProps {
-  content: React.ReactNode
+  valueTitle?: string
+  valueContent?: string
+  value2Title?: string
+  value2Content?: string
+  tokenContract: string
+  secondURL?: string
+  secondURLTitle?: string
+  projectLink?: string
+  twitter?: string
+  audit?: string
+  jungleFarm?: JungleFarm
+  pool?: Pool
 }
 
-const TooltipContent = styled.div`
-  padding: 16px;
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: 16px;
-  color: ${({ theme }) => theme.colors.text};
-  width: max-content;
-  display: none;
-  padding: 16px;
-  font-family: Poppins;
-  font-size: 17px;
-  line-height: 25px;
-  max-height: 500px;
-  z-index: 1000;
-  position: absolute;
-  bottom: calc(100% + 16px);
-  transform: translate(34px, 0);
-  right: 0;
-  max-width: 246px;
+const Tooltip: React.FunctionComponent<TooltipProps> = ({
+  valueTitle,
+  valueContent,
+  value2Title,
+  value2Content,
+  tokenContract,
+  secondURL,
+  secondURLTitle,
+  projectLink,
+  twitter,
+  audit,
+  jungleFarm,
+  pool,
+}) => {
+  const { t } = useTranslation()
+  const { chainId } = useActiveWeb3React()
+  const explorerLink = BLOCK_EXPLORER[chainId]
+  const tokenLink = `${explorerLink}/address/${tokenContract}`
 
-  &:after {
-    content: '';
-    display: block;
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid grey;
-    bottom: 0;
-    position: absolute;
-    transform: translate(-34px, 9px);
-    right: 0;
-  }
-`
-
-const Container = styled.div`
-  position: relative;
-
-  &:hover ${TooltipContent}, &:focus-within ${TooltipContent} {
-    display: block;
-  }
-`
-
-const Tooltip: React.FunctionComponent<TooltipProps> = ({ content, children }) => {
   return (
-    <Container>
-      {children}
-      <TooltipContent>{content}</TooltipContent>
-    </Container>
+    <>
+      {projectLink && twitter && (
+        <ButtonsRow twitter={twitter} projectLink={projectLink} bubble={tokenContract} audit={audit} />
+      )}
+      {valueTitle && (
+        <Flex sx={styles.infoRow}>
+          <Text sx={styles.titleText}>{valueTitle}: </Text>
+          <Text sx={styles.contentText}>{valueContent}</Text>
+        </Flex>
+      )}
+      {value2Title && (
+        <Flex sx={styles.infoRow}>
+          <Text sx={styles.titleText}>{value2Title}: </Text>
+          <Text sx={styles.contentText}>{value2Content}</Text>
+        </Flex>
+      )}
+      {jungleFarm && <JungleFarmsEndsIn farm={jungleFarm} />}
+      {pool && <PoolsEndsIn pool={pool} />}
+      <Flex sx={{ justifyContent: 'center' }}>
+        <Flex sx={{ width: '144px', flexDirection: 'column' }}>
+          <Flex sx={styles.linkRow}>
+            <LinkExternal href={tokenLink} sx={{ fontSize: '12px', lineHeight: '14px' }}>
+              {t('View Token Contract')}
+            </LinkExternal>
+          </Flex>
+          {secondURL && (
+            <Flex sx={styles.linkRow}>
+              <LinkExternal href={secondURL} sx={{ fontSize: '12px', lineHeight: '14px' }}>
+                {secondURLTitle}
+              </LinkExternal>
+            </Flex>
+          )}
+        </Flex>
+      </Flex>
+    </>
   )
 }
 

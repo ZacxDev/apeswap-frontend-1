@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react'
+import useActiveWeb3React from './useActiveWeb3React'
 import useRefresh from './useRefresh'
 
 export const baseUrl = 'https://api.apeswap.com/api/v1'
 
 export const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'https://ape-swap-api.herokuapp.com'
+export const apiV2BaseUrl = process.env.REACT_APP_API_V2_BASE_URL || 'https://api-v2.apeswap.finance'
+
+export const moonPayBaseUrl =
+  process.env.REACT_APP_MOONPAY_BASE_URL ||
+  'https://buy-staging.moonpay.io?apiKey=pk_test_ofxbUiq0BDNvCBwRbO5mHjG7gKBKLWY2&colorCode=%23ffb300'
 
 export const baseUrlStrapi = 'https://apeswap-strapi.herokuapp.com'
 const EXCHANGE_SUBGRAPH_URL = 'https://graph.apeswap.finance/subgraphs/name/ape-swap/apeswap-subgraph'
 const EXCHANGE_POLYGON_SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/apeswapfinance/dex-polygon'
 
+// TODO: Switch this back to main
+export const apeswapListUrl =
+  // process.env.REACT_APP_LISTS_CONFIG_URL ||
+  'https://raw.githubusercontent.com/ApeSwapFinance/apeswap-lists/feat/mav2/config'
 /* eslint-disable camelcase */
 
 export interface TradePair {
@@ -204,6 +214,45 @@ export const useLiquidityData = () => {
   return data
 }
 
+// TODO: Update with production currencies once URL is updated
+const defaultCurrencies = {
+  56: 'bnb_bsc',
+  1: 'eth',
+  137: 'matic_polygon',
+}
+
+export const useMoonPayUrl = (manualChainId?: number) => {
+  const { account, chainId } = useActiveWeb3React()
+  const chainIdToUse = manualChainId || chainId
+  const defaultCurrency = defaultCurrencies[chainIdToUse] || defaultCurrencies[56]
+  const baseMoonPayUrl = `${moonPayBaseUrl}&defaultCurrencyCode=${defaultCurrency}`
+  const [url, setUrl] = useState<string>(baseMoonPayUrl)
+
+  useEffect(() => {
+    const fetchUrl = async () => {
+      try {
+        const response = await fetch(
+          `${apiBaseUrl}/user/sign/${account}?${new URLSearchParams({
+            url: baseMoonPayUrl,
+          })}`,
+        )
+        if (response.ok) {
+          const text = await response.text()
+          setUrl(text)
+        } else {
+          console.warn('Unable to load signed moonpay url data:', response.statusText)
+        }
+      } catch (error) {
+        console.warn('Unable to load signed moonpay url data:', error)
+      }
+    }
+
+    if (account) fetchUrl()
+  }, [account, baseMoonPayUrl])
+
+  return url
+}
+
 const PAIR_CONFIGS = {
   'BANANA/BUSD': {
     address: '0x7bd46f6da97312ac2dbd1749f82e202764c0b914',
@@ -273,12 +322,21 @@ export const getPromosHome = async () => {
   return promos
 }
 
+export const getBurningGames = async () => {
+  const url = `${baseUrlStrapi}/burning-games?_sort=order:asc`
+  const resp = await fetch(url)
+  const data = await resp.json()
+
+  return data
+}
+
 export const getNewsHome = async () => {
   const url = `${baseUrlStrapi}/home-news?_sort=published_at:desc`
   const resp = await fetch(url)
   const data = await resp.json()
   const news = data.map((curNews) => {
     return {
+      id: curNews.id,
       title: curNews.title,
       description: curNews.description,
       image: curNews.image,
@@ -331,4 +389,24 @@ export const getHeadersHome = async () => {
   })
 
   return headers
+}
+
+export const getSwapBanners = async () => {
+  if (window.sessionStorage.getItem('banners')) {
+    return JSON.parse(window.sessionStorage.getItem('banners'))
+  }
+  const url = `${baseUrlStrapi}/swapbanners`
+  const resp = await fetch(url)
+  const data = await resp.json()
+  const banners = data.map((banner) => {
+    return {
+      desktop: banner.desktop,
+      mobile: banner.mobile,
+      link: banner.link,
+      param: banner.param,
+    }
+  })
+  window.sessionStorage.setItem('banners', JSON.stringify(banners))
+
+  return banners
 }

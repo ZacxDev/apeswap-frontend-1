@@ -1,26 +1,30 @@
 /* eslint-disable no-param-reassign */
+import { ChainId } from '@ape.swap/sdk'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { CHAIN_ID, NETWORK_LABEL } from 'config/constants/chains'
+import { NETWORK_LABEL } from 'config/constants/chains'
 import { Network, NetworkState } from 'state/types'
 import fetchAndUpdateNetwork from './fetchNetwork'
 
 const chainIdSafeCheck = (): { chainId: number; chainIdFromUrl: boolean } => {
   const { search } = window.location
   const params = new URLSearchParams(search)
-  const chainStr = params.get('chain')
+  const paramChainId = params.get('chain')
   const removeChainParamUrl = window.location.href.split('?chain')[0]
   window.history.pushState({}, document.title, removeChainParamUrl)
   const localStorageChain = parseInt(window.localStorage.getItem('chainIdStatus'))
-  if (chainStr) {
-    if (chainStr.toLowerCase() === NETWORK_LABEL[CHAIN_ID.BSC].toLowerCase()) {
-      return { chainId: CHAIN_ID.BSC, chainIdFromUrl: true }
+  if (paramChainId) {
+    if (paramChainId.toLowerCase() === NETWORK_LABEL[ChainId.BSC].toLowerCase()) {
+      return { chainId: ChainId.BSC, chainIdFromUrl: true }
     }
-    if (chainStr.toLowerCase() === NETWORK_LABEL[CHAIN_ID.MATIC].toLowerCase()) {
-      return { chainId: CHAIN_ID.MATIC, chainIdFromUrl: true }
+    if (paramChainId.toLowerCase() === NETWORK_LABEL[ChainId.MATIC].toLowerCase()) {
+      return { chainId: ChainId.MATIC, chainIdFromUrl: true }
     }
-    return { chainId: localStorageChain || CHAIN_ID.BSC, chainIdFromUrl: false }
+    if (paramChainId.toLowerCase() === NETWORK_LABEL[ChainId.MAINNET].toLowerCase()) {
+      return { chainId: ChainId.MAINNET, chainIdFromUrl: true }
+    }
+    return { chainId: parseInt(paramChainId) || ChainId.BSC, chainIdFromUrl: true }
   }
-  return { chainId: localStorageChain || CHAIN_ID.BSC, chainIdFromUrl: false }
+  return { chainId: localStorageChain || ChainId.BSC, chainIdFromUrl: false }
 }
 
 const { chainId: initChainId, chainIdFromUrl } = chainIdSafeCheck()

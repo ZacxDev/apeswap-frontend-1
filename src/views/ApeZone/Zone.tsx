@@ -1,82 +1,83 @@
-import React from 'react'
-import { BaseLayout, Card, Heading, Text } from '@apeswapfinance/uikit'
-import styled from 'styled-components'
-import { TranslateString } from 'utils/translateTextHelpers'
-import { useWeb3React } from '@web3-react/core'
-import Divider from './components/Divider'
-import BuyCard from './components/BuyCard'
-import SellCard from './components/SellCard'
-import Iao from './components/IAO/CurrentIao'
-import Description from './components/Description/Description'
-import Pools from './components/Pools/Pools'
-
-const StyledHeroSection = styled.div`
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-`
-
-const MarginContainer = styled.div`
-  margin: 53px 30px;
-`
-
-const Cards = styled(BaseLayout)`
-  align-items: stretch;
-  justify-content: stretch;
-  margin: 32px 0px;
-  & > div {
-    grid-column: span 6;
-    width: 100%;
-  }
-
-  ${({ theme }) => theme.mediaQueries.sm} {
-    & > div {
-      grid-column: span 8;
-    }
-  }
-
-  ${({ theme }) => theme.mediaQueries.lg} {
-    & > div {
-      grid-column: span 6;
-    }
-  }
-`
-const PaddedCard = styled(Card)`
-  padding: 26px;
-`
+import React, { useState } from 'react'
+import { useTranslation } from 'contexts/Localization'
+import Page from 'components/layout/Page'
+import Spacer from 'components/Spacer'
+import Banner from 'components/Banner'
+import GnanaUtility from './components/GnanaUtility/GnanaUtility'
+import GnanaDisclaimers from './components/GnanaDisclaimers/GnanaDisclaimers'
+import ConvertCard from './components/ConvertCard'
+import ReturnCard from './components/ReturnCard'
+import {
+  PaddedCard,
+  TopCon,
+  CenterCard,
+  OuterContent,
+  OuterContentText,
+  InnerContent,
+  InnerContentText,
+  Cards,
+  ReadMore,
+  WarningHeader,
+} from './styles'
+import SwiperProvider from '../../contexts/SwiperProvider'
 
 const Zone = () => {
-  const { account } = useWeb3React()
+  const [readingMore, setReadingMore] = useState(false)
+  const { t } = useTranslation()
+
+  const toggleReadMore = () => {
+    setReadingMore(!readingMore)
+  }
 
   return (
     <>
-      <Description />
-      <StyledHeroSection>
-        <MarginContainer>
-          <Heading size="xl" mb="26px" color="primary">
-            {TranslateString(999, 'Buy Golden Banana')}
-          </Heading>
-          <PaddedCard>
-            <Heading size="lg" fontFamily="poppins" color="warning">
-              WARNING
-            </Heading>
-            <Text fontFamily="poppins">
-              Buying GNANA involves paying a 28% burn fee and a 2% reflect fee for a total cost of 30%.
-            </Text>
-            <Text fontFamily="poppins">
-              This means that for every 1 BANANA you trade in, you will receive 0.7 GNANA
-            </Text>
-          </PaddedCard>
-          <Cards>
-            <BuyCard account={account} />
-            <SellCard account={account} />
-          </Cards>
-        </MarginContainer>
-      </StyledHeroSection>
-      <Iao />
-      <Divider />
-      <Pools />
+      <Page width="1130px">
+        <Banner
+          banner="gnana"
+          link="?modal=tutorial"
+          title={t('Golden Banana')}
+          margin="0px 0px 20px 0px"
+          maxWidth={1130}
+        />
+        <PaddedCard>
+          <TopCon>
+            <CenterCard>
+              <WarningHeader as="h1">{t('HEADS UP, APES!')}</WarningHeader>
+              {!readingMore && <ReadMore onClick={toggleReadMore}>{t('Read More')}</ReadMore>}
+
+              <InnerContent readingMore={readingMore}>
+                <InnerContentText>
+                  {t(
+                    'Converting from BANANA to GNANA involves paying a 28% burn fee and a 2% reflect fee for a total cost of 30% per conversion. For every 1 BANANA you convert, you will receive 0.7 GNANA.',
+                  )}
+                </InnerContentText>
+              </InnerContent>
+            </CenterCard>
+          </TopCon>
+
+          <OuterContent readingMore={readingMore}>
+            <OuterContentText>
+              {t(
+                'Buying GNANA involves paying a 28% burn fee and a 2% reflect fee for a total cost of 30%. This means that for every 1 BANANA you trade in, you will receive 0.7 GNANA',
+              )}
+            </OuterContentText>
+          </OuterContent>
+        </PaddedCard>
+
+        <Cards id="convert">
+          <ConvertCard fromToken="BANANA" toToken="GNANA" />
+          <ReturnCard fromToken="GNANA" toToken="BANANA" />
+        </Cards>
+
+        <SwiperProvider>
+          <GnanaUtility />
+        </SwiperProvider>
+        <GnanaDisclaimers />
+
+        <Spacer size="lg" />
+        <Spacer size="md" />
+      </Page>
     </>
   )
 }
-export default Zone
+export default React.memo(Zone)

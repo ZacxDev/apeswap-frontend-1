@@ -1,15 +1,11 @@
-import nfaStakingPools from 'config/constants/nfaStakingPools'
 import nfaStakingPoolsAbi from 'config/abi/nfaStaking.json'
 import nfaAbi from 'config/abi/nonFungibleApes.json'
-import multicallABI from 'config/abi/Multicall.json'
-import { getMulticallAddress, getNonFungibleApesAddress } from 'utils/addressHelper'
-import { getContract } from 'utils/web3'
+import { getNonFungibleApesAddress } from 'utils/addressHelper'
 import multicall from 'utils/multicall'
 import BigNumber from 'bignumber.js'
+import { NfaStakingPoolConfig } from 'config/constants/types'
 
-export const fetchPoolsAllowance = async (chainId, account) => {
-  const multicallContractAddress = getMulticallAddress(chainId)
-  const multicallContract = getContract(multicallABI, multicallContractAddress, chainId)
+export const fetchPoolsAllowance = async (chainId, account, nfaStakingPools: NfaStakingPoolConfig[]) => {
   const nfaAddress = getNonFungibleApesAddress(chainId)
   const calls = nfaStakingPools.map((p) => ({
     address: nfaAddress,
@@ -17,20 +13,18 @@ export const fetchPoolsAllowance = async (chainId, account) => {
     params: [account, p.contractAddress[chainId]],
   }))
 
-  const allowances = await multicall(multicallContract, nfaAbi, calls)
+  const allowances = await multicall(chainId, nfaAbi, calls)
   return nfaStakingPools.reduce((acc, pool, index) => ({ ...acc, [pool.sousId]: allowances[index][0] }), {})
 }
 
-export const fetchUserBalances = async (chainId, account) => {
-  const multicallContractAddress = getMulticallAddress(chainId)
-  const multicallContract = getContract(multicallABI, multicallContractAddress, chainId)
+export const fetchUserBalances = async (chainId, account, nfaStakingPools: NfaStakingPoolConfig[]) => {
   const nfaAddress = getNonFungibleApesAddress(chainId)
   const calls = nfaStakingPools.map(() => ({
     address: nfaAddress,
     name: 'balanceOf',
     params: [account],
   }))
-  const tokenBalancesRaw = await multicall(multicallContract, nfaAbi, calls)
+  const tokenBalancesRaw = await multicall(chainId, nfaAbi, calls)
   const tokenBalances = nfaStakingPools.reduce(
     (acc, pool, index) => ({ ...acc, [pool.sousId]: new BigNumber(tokenBalancesRaw[index]).toJSON() }),
     {},
@@ -38,15 +32,13 @@ export const fetchUserBalances = async (chainId, account) => {
   return { ...tokenBalances }
 }
 
-export const fetchUserStakeBalances = async (chainId, account) => {
-  const multicallContractAddress = getMulticallAddress(chainId)
-  const multicallContract = getContract(multicallABI, multicallContractAddress, chainId)
+export const fetchUserStakeBalances = async (chainId, account, nfaStakingPools: NfaStakingPoolConfig[]) => {
   const calls = nfaStakingPools.map((p) => ({
     address: p.contractAddress[chainId],
     name: 'userInfo',
     params: [account],
   }))
-  const userInfo = await multicall(multicallContract, nfaStakingPoolsAbi, calls)
+  const userInfo = await multicall(chainId, nfaStakingPoolsAbi, calls)
   const stakedBalances = nfaStakingPools.reduce(
     (acc, pool, index) => ({
       ...acc,
@@ -58,15 +50,13 @@ export const fetchUserStakeBalances = async (chainId, account) => {
   return { ...stakedBalances }
 }
 
-export const fetchUserPendingRewards = async (chainId, account) => {
-  const multicallContractAddress = getMulticallAddress(chainId)
-  const multicallContract = getContract(multicallABI, multicallContractAddress, chainId)
+export const fetchUserPendingRewards = async (chainId, account, nfaStakingPools: NfaStakingPoolConfig[]) => {
   const calls = nfaStakingPools.map((p) => ({
     address: p.contractAddress[chainId],
     name: 'pendingReward',
     params: [account],
   }))
-  const res = await multicall(multicallContract, nfaStakingPoolsAbi, calls)
+  const res = await multicall(chainId, nfaStakingPoolsAbi, calls)
   const pendingRewards = nfaStakingPools.reduce(
     (acc, pool, index) => ({
       ...acc,
@@ -78,15 +68,13 @@ export const fetchUserPendingRewards = async (chainId, account) => {
   return { ...pendingRewards }
 }
 
-export const fetchUserStakedNfas = async (chainId, account) => {
-  const multicallContractAddress = getMulticallAddress(chainId)
-  const multicallContract = getContract(multicallABI, multicallContractAddress, chainId)
+export const fetchUserStakedNfas = async (chainId, account, nfaStakingPools: NfaStakingPoolConfig[]) => {
   const calls = nfaStakingPools.map((p) => ({
     address: p.contractAddress[chainId],
     name: 'stakedNfts',
     params: [account],
   }))
-  const res = await multicall(multicallContract, nfaStakingPoolsAbi, calls)
+  const res = await multicall(chainId, nfaStakingPoolsAbi, calls)
   const stakedNfas = nfaStakingPools.reduce(
     (acc, pool, index) => ({
       ...acc,

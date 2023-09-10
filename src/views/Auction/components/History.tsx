@@ -4,6 +4,7 @@ import { Text, ArrowBackIcon, ArrowForwardIcon } from '@apeswapfinance/uikit'
 import BigNumber from 'bignumber.js'
 import { getBalanceNumber } from 'utils/formatBalance'
 import { useGetNfaAuctionHistory } from 'hooks/api'
+import { useTranslation } from 'contexts/Localization'
 
 interface RowProps {
   background?: boolean
@@ -14,10 +15,8 @@ interface ArrowProps {
 }
 
 const PositinBox = styled.div`
-  position: absolute;
   width: 100%;
   height: 600px;
-  top: 870px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -26,7 +25,7 @@ const PositinBox = styled.div`
 const HistoryWrapper = styled.div`
   width: 790px;
   height: 558px;
-  background: ${({ theme }) => theme.colors.card};
+  background: ${({ theme }) => theme.colors.navbar};
   mix-blend-mode: normal;
   box-shadow: 5px 4px 8px rgba(0, 0, 0, 0.1), inset 355px 4px 250px rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(24px);
@@ -39,9 +38,8 @@ const HistoryWrapper = styled.div`
 const HistoryTitle = styled(Text)`
   position: absolute;
   top: 30px;
-  font-family: Titan One;
+  font-weight: 800;
   font-style: normal;
-  font-weight: normal;
   font-size: 22px;
   line-height: 25px;
   letter-spacing: 0.05em;
@@ -55,13 +53,17 @@ const ColumnHeadersWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-left: 90px;
-  padding-right: 70px;
+  padding: 0 10px;
+  ${({ theme }) => theme.mediaQueries.xs} {
+    padding: 0 20px;
+  }
+  ${({ theme }) => theme.mediaQueries.md} {
+    padding: 0 90px;
+  }
 `
 const HeaderText = styled(Text)`
-  font-family: Poppins;
   font-style: normal;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 14px;
   line-height: 18px;
   letter-spacing: 0.05em;
@@ -74,27 +76,30 @@ const BodyWrapper = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  padding-left: 25px;
-  padding-right: 25px;
   flex-shrink: 0;
+  padding: 0 10px;
+  ${({ theme }) => theme.mediaQueries.md} {
+    padding: 0 25px;
+  }
 `
 
 const Row = styled.div<RowProps>`
   height: 27px;
   width: 100%;
-  background: ${(props) => props.background && (props.theme.isDark ? 'rgb(250, 250, 250, 0.1)' : 'rgb(250, 250, 250)')};
+  background: ${(props) => props.background && props.theme.colors.white3};
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-left: 45px;
-  padding-right: 45px;
   flex-shrink: 0;
+  ${({ theme }) => theme.mediaQueries.md} {
+    padding: 0 45px;
+  }
 `
 
 const Column = styled.div`
   height: 27;
   width: 120px;
-  font-family: Poppins;
+  font-weight: 600;
   font-style: normal;
   font-size: 14px;
   text-align: center;
@@ -112,7 +117,7 @@ const ArrowsWrapper = styled.div`
 `
 
 const StyledBackArrow = styled(ArrowBackIcon)<ArrowProps>`
-  fill: #ffb300;
+  fill: ${({ theme }) => theme.colors.yellow};
   height: 50px;
   width: 50px;
   margin-right: 10px;
@@ -122,7 +127,7 @@ const StyledBackArrow = styled(ArrowBackIcon)<ArrowProps>`
 `
 
 const StyledForwardArrow = styled(ArrowForwardIcon)<ArrowProps>`
-  fill: #ffb300;
+  fill: ${({ theme }) => theme.colors.yellow};
   height: 50px;
   width: 50px;
   margin-left: 10px;
@@ -139,6 +144,7 @@ const History: React.FC = () => {
   const [curSlice, setCurSlice] = useState(ROWS_PER_PAGE)
   const [backArrowFlag, setBackArrowFlag] = useState(false)
   const [forwardArrowFlag, setForwardArrowFlag] = useState(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
     setForwardArrowFlag(ROWS_PER_PAGE < historyData?.length)
@@ -200,12 +206,12 @@ const History: React.FC = () => {
   return (
     <PositinBox>
       <HistoryWrapper>
-        <HistoryTitle>History</HistoryTitle>
+        <HistoryTitle>{t('History')}</HistoryTitle>
         <ColumnHeadersWrapper>
-          <HeaderText>NFA Index</HeaderText>
-          <HeaderText>Amount</HeaderText>
-          <HeaderText>Bidder</HeaderText>
-          <HeaderText>Block Number</HeaderText>
+          <HeaderText>{t('NFA Index')}</HeaderText>
+          <HeaderText>{t('Amount')}</HeaderText>
+          <HeaderText>{t('Bidder')}</HeaderText>
+          <HeaderText>{t('Block No.')}</HeaderText>
         </ColumnHeadersWrapper>
         <BodyWrapper>{renderRows()}</BodyWrapper>
         <ArrowsWrapper>

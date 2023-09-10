@@ -1,11 +1,15 @@
 /* eslint-disable no-param-reassign */
 import { createSlice } from '@reduxjs/toolkit'
-import vaultsConfig from 'config/constants/vaults'
-import fetchVaultData from './fetchVaultData'
-import { fetchVaultUserAllowances, fetchVaultUserStakedBalances, fetchVaultUserTokenBalances } from './fetchVaultsUser'
-import { VaultsState, TokenPrices, Vault } from '../types'
+import {
+  fetchVaultUserAllowances,
+  fetchVaultUserStakedAndPendingBalances,
+  fetchVaultUserTokenBalances,
+} from './fetchVaultsUser'
+import { VaultsState, TokenPrices, Vault, FarmLpAprsType, AppThunk } from '../types'
+import fetchVaults from './fetchVaults'
+import { vaults } from '@ape.swap/apeswap-lists'
 
-const initialState: VaultsState = { data: [], loadVaultData: false, userDataLoaded: false }
+const initialState: VaultsState = { data: vaults, loadVaultData: false, userDataLoaded: false }
 
 export const vaultSlice = createSlice({
   name: 'Vaults',
@@ -14,27 +18,23 @@ export const vaultSlice = createSlice({
     setLoadVaultData: (state, action) => {
       const liveVaultsData: Vault[] = action.payload
       state.data = state.data.map((vault) => {
-        const liveVaultData = liveVaultsData.find((entry) => entry.pid === vault.pid)
+        const liveVaultData = liveVaultsData.find((entry) => entry.id === vault.id)
         return { ...vault, ...liveVaultData }
       })
     },
     setVaultUserData: (state, action) => {
       const userData = action.payload
       state.data = state.data.map((vault) => {
-        const userVaultData = userData.find((entry) => entry.pid === vault.pid)
+        const userVaultData = userData.find((entry) => entry.id === vault.id)
         return { ...vault, userData: userVaultData }
       })
     },
     updateVaultsUserData: (state, action) => {
-      const { field, value, pid } = action.payload
-      const index = state.data.findIndex((v) => v.pid === pid)
+      const { field, value, id } = action.payload
+      const index = state.data.findIndex((v) => v.id === id)
       state.data[index] = { ...state.data[index], userData: { ...state.data[index].userData, [field]: value } }
     },
-    setVaults: (state, action) => {
-      if (!state.loadVaultData) {
-        state.data = action.payload
-      }
-    },
+
     setVaultsLoad: (state, action) => {
       state.loadVaultData = action.payload
     },
@@ -42,63 +42,73 @@ export const vaultSlice = createSlice({
 })
 
 // thunks
-export const fetchVaultsPublicDataAsync = (chainId: number, tokenPrices: TokenPrices[]) => async (dispatch) => {
-  try {
-    const vaults = await fetchVaultData(chainId, tokenPrices)
-    dispatch(setLoadVaultData(vaults))
-  } catch (error) {
-    console.warn(error)
+export const fetchVaultsPublicDataAsync =
+  (chainId: number, tokenPrices: TokenPrices[], farmLpAprs: FarmLpAprsType): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const vaultsConfig = getState().vaults.data
+      const vaults = await fetchVaults(chainId, tokenPrices, farmLpAprs, vaultsConfig)
+      dispatch(setLoadVaultData(vaults))
+    } catch (error) {
+      console.warn(error)
+    }
   }
-}
 
-export const fetchVaultUserDataAsync = (account: string, chainId: number) => async (dispatch) => {
-  try {
-    const filteredVaults = vaultsConfig.filter((vault) => vault.network === chainId)
-    const userVaultAllowances = await fetchVaultUserAllowances(account, chainId)
-    const userVaultTokenBalances = await fetchVaultUserTokenBalances(account, chainId)
-    const userVaultBalances = await fetchVaultUserStakedBalances(account, chainId)
-    const userData = filteredVaults.map((vault, index) => {
-      return {
-        pid: vault.pid,
-        allowance: userVaultAllowances[index],
-        tokenBalance: userVaultTokenBalances[index],
-        stakedBalance: userVaultBalances[index],
-      }
-    })
-    dispatch(setVaultUserData(userData))
-  } catch (error) {
-    console.warn(error)
+export const fetchVaultUserDataAsync =
+  (account: string, chainId: number): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const vaults = getState().vaults.data
+      const filteredVaults = vaults.filter((vault) => vault.availableChains.includes(chainId))
+      const userVaultAllowances = await fetchVaultUserAllowances(account, chainId, vaults)
+      const userVaultTokenBalances = await fetchVaultUserTokenBalances(account, chainId, vaults)
+      const userVaultBalances = await fetchVaultUserStakedAndPendingBalances(account, chainId, vaults)
+      const userData = filteredVaults.map((vault, index) => {
+        return {
+          id: vault.id,
+          allowance: userVaultAllowances[index],
+          tokenBalance: userVaultTokenBalances[index],
+          stakedBalance: userVaultBalances.stakedBalances[index],
+          pendingRewards: userVaultBalances.pendingRewards[index],
+        }
+      })
+      dispatch(setVaultUserData(userData))
+    } catch (error) {
+      console.warn(error)
+    }
   }
-}
 
-export const setFilteredVaults = (chainId: number) => async (dispatch) => {
-  const filteredVaults = vaultsConfig.filter((vault) => vault.network === chainId)
-  dispatch(setVaults(filteredVaults))
-  dispatch(setVaultsLoad(true))
-}
+export const updateVaultUserAllowance =
+  (account: string, chainId: number, id: number): AppThunk =>
+  async (dispatch, getState) => {
+    const vaults = getState().vaults.data
+    const allowances = await fetchVaultUserAllowances(account, chainId, vaults)
+    const filteredVaults = vaults.filter((vault) => vault.availableChains.includes(chainId))
+    const index = filteredVaults.findIndex((v) => v.pid === id)
+    dispatch(updateVaultsUserData({ id, field: 'allowance', value: allowances[index] }))
+  }
 
-export const updateVaultUserAllowance = (account: string, chainId: number, pid: number) => async (dispatch) => {
-  const allowances = await fetchVaultUserAllowances(account, chainId)
-  const filteredVaults = vaultsConfig.filter((vault) => vault.network === chainId)
-  const pidIndex = filteredVaults.findIndex((v) => v.pid === pid)
-  dispatch(updateVaultsUserData({ pid, field: 'allowance', value: allowances[pidIndex] }))
-}
+export const updateVaultUserBalance =
+  (account: string, chainId: number, id: number): AppThunk =>
+  async (dispatch, getState) => {
+    const vaults = getState().vaults.data
+    const tokenBalances = await fetchVaultUserTokenBalances(account, chainId, vaults)
+    const filteredVaults = vaults.filter((vault) => vault.availableChains.includes(chainId))
+    const index = filteredVaults.findIndex((v) => v.id === id)
+    dispatch(updateVaultsUserData({ id, field: 'tokenBalance', value: tokenBalances[index] }))
+  }
 
-export const updateVaultUserBalance = (account: string, chainId: number, pid: number) => async (dispatch) => {
-  const tokenBalances = await fetchVaultUserTokenBalances(account, chainId)
-  const filteredVaults = vaultsConfig.filter((vault) => vault.network === chainId)
-  const pidIndex = filteredVaults.findIndex((v) => v.pid === pid)
-  dispatch(updateVaultsUserData({ pid, field: 'tokenBalance', value: tokenBalances[pidIndex] }))
-}
-
-export const updateVaultUserStakedBalance = (account: string, chainId: number, pid: number) => async (dispatch) => {
-  const stakedBalances = await fetchVaultUserStakedBalances(account, chainId)
-  const filteredVaults = vaultsConfig.filter((vault) => vault.network === chainId)
-  const pidIndex = filteredVaults.findIndex((v) => v.pid === pid)
-  dispatch(updateVaultsUserData({ pid, field: 'stakedBalance', value: stakedBalances[pidIndex] }))
-}
+export const updateVaultUserStakedBalance =
+  (account: string, chainId: number, id: number): AppThunk =>
+  async (dispatch, getState) => {
+    const vaults = getState().vaults.data
+    const stakedBalances = await fetchVaultUserStakedAndPendingBalances(account, chainId, vaults)
+    const filteredVaults = vaults.filter((vault) => vault.availableChains.includes(chainId))
+    const index = filteredVaults.findIndex((v) => v.id === id)
+    dispatch(updateVaultsUserData({ id, field: 'stakedBalance', value: stakedBalances.stakedBalances[index] }))
+  }
 
 // Actions
-export const { setLoadVaultData, setVaultUserData, setVaults, setVaultsLoad, updateVaultsUserData } = vaultSlice.actions
+export const { setLoadVaultData, setVaultUserData, setVaultsLoad, updateVaultsUserData } = vaultSlice.actions
 
 export default vaultSlice.reducer

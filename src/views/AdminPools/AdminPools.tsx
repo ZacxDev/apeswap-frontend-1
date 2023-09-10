@@ -6,16 +6,17 @@ import { useWeb3React } from '@web3-react/core'
 import { Heading, Text, Card, Checkbox, ArrowDropDownIcon } from '@apeswapfinance/uikit'
 import orderBy from 'lodash/orderBy'
 import partition from 'lodash/partition'
-import useI18n from 'hooks/useI18n'
-import useBlock from 'hooks/useBlock'
+
+import useBlockNumber from 'lib/hooks/useBlockNumber'
 import useWindowSize, { Size } from 'hooks/useDimensions'
 import { getBalanceNumber } from 'utils/formatBalance'
-import { usePools } from 'state/hooks'
+import { usePools } from 'state/pools/hooks'
 import { Pool } from 'state/types'
 import Page from 'components/layout/Page'
-import SearchInput from '../Pools/components/SearchInput'
-import PoolTabButtons from '../Pools/components/PoolTabButtons'
-import PoolCard from '../Pools/components/PoolCard/PoolCard'
+import { useTranslation } from 'contexts/Localization'
+import SearchInput from '../PoolsLegacy/components/SearchInput'
+import PoolTabButtons from '../PoolsLegacy/components/PoolTabButtons'
+import PoolCard from '../PoolsLegacy/components/PoolCard/PoolCard'
 
 interface LabelProps {
   active?: boolean
@@ -56,13 +57,15 @@ const ControlContainer = styled(Card)`
 const ToggleWrapper = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center
+  justify-content: center;
   margin-left: 0px;
   cursor: pointer;
   ${Text} {
     margin-left: 4px;
-  ${({ theme }) => theme.mediaQueries.md} { margin-left: 8px;}
-  }
+    ${({ theme }) => theme.mediaQueries.md} {
+      margin-left: 8px;
+    }
+  } ;
 `
 
 const ToggleContainer = styled.div`
@@ -215,7 +218,7 @@ const StyledCheckbox = styled(Checkbox)<CheckboxProps>`
 `
 
 const ContainerLabels = styled.div`
-  background: ${({ theme }) => theme.card.background};
+  background: ${({ theme }) => theme.colors.white3};
   border-radius: 16px;
   margin-top: 24px;
   height: 32px;
@@ -379,7 +382,7 @@ const ButtonCheckWrapper = styled.div`
 const StyledHeading = styled(Heading)`
   font-size: 32px;
   max-width: 176px !important;
-
+  margin-bottom: 8px;
   ${({ theme }) => theme.mediaQueries.xs} {
     font-size: 36px;
     max-width: 240px !important;
@@ -414,9 +417,9 @@ const StyledPage = styled(Page)`
 const StyledLabel = styled.div<LabelProps>`
   display: flex;
   color: ${({ theme, active }) => (active ? '#FFFFFF' : theme.colors.primary)};
-  font-family: Poppins;
+
   padding: 4px 12px;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 12px;
   line-height: 12px;
   border-radius: ${({ active }) => active && '50px'};
@@ -432,7 +435,7 @@ const StyledArrowDropDownIcon = styled(ArrowDropDownIcon)<DropdownProps>`
   transform: ${({ down }) => (!down ? 'rotate(180deg)' : 'rotate(0)')};
   margin-left: 7px;
   margin-top: 2px;
-  'rotate(180deg)' : 'rotate(0)'
+  /* 'rotate(180deg)' : 'rotate(0)' */
 `
 
 const FlexLayout = styled.div`
@@ -446,7 +449,6 @@ const FlexLayout = styled.div`
 `
 
 const AdminText = styled(Text)`
-  font-family: poppins;
   font-size: 18px;
   font-weight: 500;
   color: white;
@@ -464,8 +466,8 @@ const AdminPools: React.FC = () => {
   const { pathname } = useLocation()
   const size: Size = useWindowSize()
   const allPools = usePools(account)
-  const TranslateString = useI18n()
-  const block = useBlock()
+  const { t } = useTranslation()
+  const currentBlock = useBlockNumber()
   const isActive = !pathname.includes('history')
   const [sortDirection, setSortDirection] = useState<boolean | 'desc' | 'asc'>('desc')
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -495,7 +497,7 @@ const AdminPools: React.FC = () => {
   const adminPools = allPools.filter((pool) => pool.forAdmins)
 
   const curPools = adminPools.map((pool) => {
-    return { ...pool, isFinished: pool.sousId === 0 ? false : pool.isFinished || block > pool.endBlock }
+    return { ...pool, isFinished: pool.sousId === 0 ? false : pool.isFinished || currentBlock > pool.endBlock }
   })
 
   const [finishedPools, openPools] = partition(curPools, (pool) => pool.isFinished)
@@ -573,13 +575,12 @@ const AdminPools: React.FC = () => {
     <>
       <Header>
         <HeadingContainer>
-          <StyledHeading as="h1" mb="8px" mt={0} color="white">
-            {TranslateString(999, 'Admin Pools')}
-          </StyledHeading>
+          <StyledHeading as="h1">{t('Admin Pools')}</StyledHeading>
           {size.width > 968 && (
             <AdminText>
-              Stake OBIE to earn new tokens. <br /> Admins will be allocated OBIE tokens from grandpa Obie Dobo. <br />{' '}
-              Your own personal pools page to reward your hard work ❤️
+              {t('Stake OBIE to earn new tokens.')} <br />{' '}
+              {t('Admins will be allocated OBIE tokens from grandpa Obie Dobo.')} <br />{' '}
+              {t('Your own personal pools page to reward your hard work')} ❤️
             </AdminText>
           )}
         </HeadingContainer>
@@ -591,9 +592,7 @@ const AdminPools: React.FC = () => {
         <ControlContainer>
           <ViewControls>
             <LabelWrapper>
-              <StyledText fontFamily="poppins" mr="15px">
-                Search
-              </StyledText>
+              <StyledText mr="15px">Search</StyledText>
               <SearchInput onChange={handleChangeQuery} value={searchQuery} />
             </LabelWrapper>
             <ButtonCheckWrapper>
@@ -601,7 +600,7 @@ const AdminPools: React.FC = () => {
               <ToggleContainer>
                 <ToggleWrapper onClick={() => setStakedOnly(!stakedOnly)}>
                   <StyledCheckbox checked={stakedOnly} onChange={() => setStakedOnly(!stakedOnly)} />
-                  <StyledText fontFamily="poppins">{TranslateString(1116, 'Staked')}</StyledText>
+                  <StyledText>{t('Staked')}</StyledText>
                 </ToggleWrapper>
               </ToggleContainer>
             </ButtonCheckWrapper>
@@ -610,12 +609,12 @@ const AdminPools: React.FC = () => {
         <ContainerLabels>
           <StyledLabelContainerHot>
             <StyledLabel active={sortOption === 'hot'} onClick={() => handleSortOptionChange('hot')}>
-              Hot
+              {t('Hot')}
             </StyledLabel>
           </StyledLabelContainerHot>
           <StyledLabelContainerAPR>
             <StyledLabel active={sortOption === 'apr'} onClick={() => handleSortOptionChange('apr')}>
-              Very Nice
+              {t('Very Nice')}
               {sortOption === 'apr' ? (
                 <StyledArrowDropDownIcon width="7px" height="8px" color="white" down={sortDirection === 'desc'} />
               ) : null}
@@ -623,18 +622,18 @@ const AdminPools: React.FC = () => {
           </StyledLabelContainerAPR>
           <StyledLabelContainerLiquidity>
             <StyledLabel active={sortOption === 'totalStaked'} onClick={() => handleSortOptionChange('totalStaked')}>
-              Good Project
+              {t('Good Project')}
               {sortOption === 'totalStaked' ? (
                 <StyledArrowDropDownIcon width="7px" height="8px" color="white" down={sortDirection === 'desc'} />
               ) : null}
             </StyledLabel>
           </StyledLabelContainerLiquidity>
           <StyledLabelContainerLP>
-            <StyledLabel>Token</StyledLabel>
+            <StyledLabel>{t('Token')}</StyledLabel>
           </StyledLabelContainerLP>
           <StyledLabelContainerEarned>
             <StyledLabel active={sortOption === 'earned'} onClick={() => handleSortOptionChange('earned')}>
-              Earned
+              {t('Earned')}
               {sortOption === 'earned' ? (
                 <StyledArrowDropDownIcon width="7px" height="8px" color="white" down={sortDirection === 'desc'} />
               ) : null}

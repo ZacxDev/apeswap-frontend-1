@@ -1,12 +1,15 @@
 import React, { useState } from 'react'
-import { Card, CardBody, Heading, Text, Flex, Image } from '@apeswapfinance/uikit'
+import { Card, Heading, Text, Flex } from '@apeswapfinance/uikit'
 import styled from 'styled-components'
 import { FarmPool } from 'state/types'
-import useI18n from 'hooks/useI18n'
+import { useAllPools } from 'state/pools/hooks'
+import { useFarms } from 'state/farms/hooks'
+import { Box } from 'theme-ui'
+import { useTranslation } from 'contexts/Localization'
 import ExpandableSectionButton from 'components/ExpandableSectionButton'
-import { useAllPools } from 'state/hooks'
 import DetailsSection from './DetailsSection'
 import CardValue from './CardValue'
+import StatsImageCard from './StatsImageCard'
 
 export interface PoolStatsProps {
   data?: FarmPool
@@ -38,14 +41,16 @@ const ExpandingWrapper = styled.div<{ expanded: boolean }>`
 `
 
 const CardStats: React.FC<PoolStatsProps> = ({ data, type, forceDetails = false }) => {
-  const TranslateString = useI18n()
+  const { t } = useTranslation()
   const pools = useAllPools()
+  const farms = useFarms(null)
   const bscScanAddress = `https://bscscan.com/address/${data.address}`
   let farmName = data.name
     .replace(/[\])}[{(]/g, '')
     .replace('WBNB', 'BNB')
     .toUpperCase()
-  let farmImage = farmName.split(' ')[0].toLocaleLowerCase()
+  let farmImage = type !== 'pool' && farms.find((farm) => farm.pid === data.pid).image
+  const filteredFarm = type !== 'pool' && farms.find((farm) => farm.pid === data.pid)
   const [showExpandableSection, setShowExpandableSection] = useState(false)
   if (type === 'pool') {
     const currentPool = pools.find((pool) => pool.sousId === data.id) || pools[0]
@@ -55,28 +60,28 @@ const CardStats: React.FC<PoolStatsProps> = ({ data, type, forceDetails = false 
 
   return (
     <StyledPoolStats key={farmName} isActive={type === 'pool'} isSuccess={type === 'farm'}>
-      <CardBody>
+      <Box>
         <Flex justifyContent="flex-start" alignItems="center" marginBottom="12px">
-          <Image
-            src={type === 'pool' ? `/images/tokens/${farmImage}` : `/images/farms/${farmImage}.svg`}
-            alt={farmImage}
-            width={64}
-            height={64}
+          <StatsImageCard
+            type={type}
+            image={farmImage}
+            token0={filteredFarm?.quoteTokenSymbol}
+            token1={filteredFarm?.tokenSymbol}
           />
-          <Heading fontSize="16px" mb="24px" style={{ textAlign: 'center', marginLeft: 20 }}>
-            {TranslateString(534, `${farmName}`)}
+          <Heading mb="24px" style={{ textAlign: 'center', marginLeft: 20 }}>
+            {t(`${farmName}`)}
           </Heading>
         </Flex>
         <Row>
-          <Text fontSize="14px">{TranslateString(536, 'Your TVL')}</Text>
+          <Text fontSize="14px">{t('Your TVL')}</Text>
           <CardValue fontSize="14px" decimals={2} value={data.stakedTvl} prefix="$" />
         </Row>
         <Row>
-          <Text fontSize="14px">{TranslateString(536, 'Your APR')}</Text>
+          <Text fontSize="14px">{t('Your APR')}</Text>
           <CardValue fontSize="14px" decimals={2} value={data.apr * 100} suffix="%" />
         </Row>
         <Row>
-          <Text fontSize="14px">{TranslateString(536, 'Your Pending Rewards')}</Text>
+          <Text fontSize="14px">{t('Your Pending Rewards')}</Text>
           <div>
             <CardValue fontSize="14px" decimals={2} value={data.pendingReward} />
             <CardValue fontSize="10px" decimals={2} value={data.pendingRewardUsd} prefix="($" suffix=")" />
@@ -91,7 +96,7 @@ const CardStats: React.FC<PoolStatsProps> = ({ data, type, forceDetails = false 
         <ExpandingWrapper expanded={showExpandableSection || forceDetails}>
           <DetailsSection farmStats={data} bscScanAddress={bscScanAddress} />
         </ExpandingWrapper>
-      </CardBody>
+      </Box>
     </StyledPoolStats>
   )
 }

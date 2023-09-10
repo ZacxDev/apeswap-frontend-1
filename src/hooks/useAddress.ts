@@ -1,15 +1,26 @@
 import { useEffect, useState } from 'react'
 import addresses from 'config/constants/contracts'
 import { Address } from 'config/constants/types'
-import { useSelector } from 'react-redux'
-import { State } from 'state/types'
+import { ChainId, SmartRouter, ZAP_ADDRESS } from '@ape.swap/sdk'
+import useActiveWeb3React from './useActiveWeb3React'
+
+export const parseAddress = (currAddress: Address, chainId: ChainId) => {
+  return currAddress[chainId]
+}
+
+export const parseSmartAddress = (
+  currAddress: Record<ChainId, Partial<Record<SmartRouter, string>>>,
+  chainId: ChainId,
+  smartRouter: SmartRouter,
+) => {
+  return currAddress[chainId][smartRouter]
+}
 
 const useAddress = (curAddresses: Address) => {
-  // Using selector to avoid circular dependecies
-  const chainId = useSelector((state: State) => state.network.data.chainId)
-  const [address, setAddress] = useState(curAddresses[chainId])
+  const { chainId } = useActiveWeb3React()
+  const [address, setAddress] = useState(parseAddress(curAddresses, chainId))
   useEffect(() => {
-    setAddress(curAddresses[chainId])
+    setAddress(parseAddress(curAddresses, chainId))
   }, [chainId, curAddresses])
   return address
 }
@@ -31,6 +42,9 @@ export const useMasterChefAddress = () => {
 }
 export const useMulticallAddress = () => {
   return useAddress(addresses.mulltiCall)
+}
+export const useMulticallV3Address = () => {
+  return useAddress(addresses.mulltiCallV3)
 }
 export const useNativeWrapCurrencyAddress = () => {
   return useAddress(addresses.nativeWrapped)
@@ -60,10 +74,50 @@ export const useApePriceGetterAddress = () => {
   return useAddress(addresses.apePriceGetter)
 }
 
-export const useVaultApeAddress = () => {
-  return useAddress(addresses.vaultApe)
+export const useVaultApeAddressV1 = () => {
+  return useAddress(addresses.vaultApeV1)
+}
+
+export const useVaultApeAddressV2 = () => {
+  return useAddress(addresses.vaultApeV2)
+}
+
+export const useVaultApeAddressV3 = () => {
+  return useAddress(addresses.vaultApeV3)
 }
 
 export const useMiniChefAddress = () => {
   return useAddress(addresses.miniApeV2)
+}
+
+export const useIazoExposerAddress = () => {
+  return useAddress(addresses.iazoExposer)
+}
+
+export const useIazoSettingsAddress = () => {
+  return useAddress(addresses.iazoSettings)
+}
+
+export const useIazoFactoryAddress = () => {
+  return useAddress(addresses.iazoFactoryProxy)
+}
+
+export const useZapAddress = () => {
+  return useAddress(ZAP_ADDRESS)
+}
+
+export const useBabTokenAddress = () => {
+  return useAddress(addresses.babToken)
+}
+
+export const useRaffleAddress = () => {
+  return useAddress(addresses.raffle)
+}
+
+export const useMigratorBalanceCheckerAddress = () => {
+  return useAddress(addresses.migratorBalanceChecker)
+}
+
+export const useMasterChefV2Address = () => {
+  return useAddress(addresses.masterChefV2)
 }

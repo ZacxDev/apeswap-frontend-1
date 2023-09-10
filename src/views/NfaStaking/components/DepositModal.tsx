@@ -4,7 +4,8 @@ import Image from 'views/Nft/components/Image'
 import styled from 'styled-components'
 import ModalActions from 'components/ModalActions'
 import { useProfile } from 'state/hooks'
-import useI18n from '../../../hooks/useI18n'
+import UnderlinedButton from 'components/UnderlinedButton'
+import { useTranslation } from '../../../contexts/Localization'
 
 interface DepositModalProps {
   tier: number
@@ -38,10 +39,12 @@ const Nfa = styled.div<{ active: boolean }>`
 
 const DepositModal: React.FC<DepositModalProps> = ({ onConfirm, onDismiss, tier }) => {
   const { profile } = useProfile()
-  const ownedFilteredNfas = profile?.ownedNfts?.filter((nfa) => nfa.attributes.rarityTierNumber === tier)
+  const ownedFilteredNfas = profile?.ownedNfts?.filter((nfa) => {
+    return nfa.attributes.rarityTierNumber === tier
+  })
   const [selectedNfas, setSelectedNfas] = useState([])
   const [pendingTx, setPendingTx] = useState(false)
-  const TranslateString = useI18n()
+  const { t } = useTranslation()
 
   const handleNfaChange = (index) => {
     if (selectedNfas.includes(index)) {
@@ -52,9 +55,9 @@ const DepositModal: React.FC<DepositModalProps> = ({ onConfirm, onDismiss, tier 
   }
 
   return (
-    <Modal title={`${TranslateString(316, 'Deposit')} Tier ${tier} NFAs`} onDismiss={onDismiss}>
+    <Modal title={`${t('Deposit')} ${t('Tier')} ${tier} ${t('NFAs')}`} onDismiss={onDismiss}>
       <Text marginBottom="20px">
-        NFAs Selected:
+        {t('NFAs Selected')}:
         {selectedNfas?.map((index) => {
           return ` ${index},`
         })}
@@ -63,19 +66,20 @@ const DepositModal: React.FC<DepositModalProps> = ({ onConfirm, onDismiss, tier 
         {ownedFilteredNfas?.length !== 0 || ownedFilteredNfas === undefined ? (
           ownedFilteredNfas?.map((nfa) => {
             return (
-              <Nfa onClick={() => handleNfaChange(nfa.index)} active={selectedNfas?.includes(nfa.index)}>
+              <Nfa
+                onClick={() => handleNfaChange(nfa.index)}
+                active={selectedNfas?.includes(nfa.index)}
+                key={nfa.index}
+              >
                 <Image src={nfa.image} alt={nfa.name} rarityTier={nfa.attributes.rarityTierNumber} />
               </Nfa>
             )
           })
         ) : (
-          <Text marginBottom="20px">You do not have any tier {tier} NFAs in your wallet 😢</Text>
+          <Text marginBottom="20px">{t('You do not have any tier %tier% NFAs in your wallet', { tier })} 😢</Text>
         )}
       </OwnedNfaWrapper>
       <ModalActions>
-        <Button fullWidth variant="secondary" onClick={onDismiss}>
-          {TranslateString(462, 'Cancel')}
-        </Button>
         <Button
           fullWidth
           disabled={pendingTx || selectedNfas?.length === 0}
@@ -86,9 +90,13 @@ const DepositModal: React.FC<DepositModalProps> = ({ onConfirm, onDismiss, tier 
             onDismiss()
           }}
           endIcon={pendingTx && <AutoRenewIcon spin color="currentColor" />}
+          style={{
+            borderRadius: '10px',
+          }}
         >
-          {pendingTx ? TranslateString(488, 'Pending Confirmation') : TranslateString(464, 'Confirm')}
+          {pendingTx ? t('Pending Confirmation') : t('Confirm')}
         </Button>
+        <UnderlinedButton text={t('Cancel')} handleClick={onDismiss} />
       </ModalActions>
     </Modal>
   )

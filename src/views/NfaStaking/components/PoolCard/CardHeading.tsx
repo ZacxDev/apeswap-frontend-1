@@ -1,8 +1,8 @@
+/** @jsxImportSource theme-ui */
 import React from 'react'
 import BigNumber from 'bignumber.js'
-import styled from 'styled-components'
-import useI18n from 'hooks/useI18n'
-// import { BLOCKS_PER_DAY } from 'config'
+import { useTranslation } from 'contexts/Localization'
+import styled from '@emotion/styled'
 import { useWeb3React } from '@web3-react/core'
 import { NfaStakingPool } from 'state/types'
 import { Flex, Heading, Text } from '@apeswapfinance/uikit'
@@ -11,7 +11,7 @@ import { getBalanceNumber } from 'utils/formatBalance'
 import ExpandableSectionButton from './ExpandableSectionButton'
 import HarvestActions from './CardActions/HarvestActions'
 import ApprovalAction from './CardActions/ApprovalAction'
-// import StakeAction from './CardActions/StakeActions'
+import StakeAction from './CardActions/StakeActions'
 import Image from '../../../Nft/components/Image'
 
 const CHAIN_ID = process.env.REACT_APP_CHAIN_ID
@@ -71,6 +71,7 @@ const StyledBackground = styled(Flex)`
 
 const StyledHeading = styled(Heading)`
   font-size: 12px;
+  font-weight: 800;
   ${({ theme }) => theme.mediaQueries.xs} {
     text-align: start;
   }
@@ -81,7 +82,7 @@ const StyledHeading = styled(Heading)`
 `
 
 const StyledText1 = styled(Text)`
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12px;
   ${({ theme }) => theme.mediaQueries.sm} {
     font-size: 15px;
@@ -89,7 +90,7 @@ const StyledText1 = styled(Text)`
 `
 
 const StyledText2 = styled(Text)`
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12px;
   margin-top: 1px;
 `
@@ -97,6 +98,7 @@ const StyledText2 = styled(Text)`
 const StyledText3 = styled(Text)`
   font-size: 12px;
   color: #38a611;
+  font-weight: 800;
   ${({ theme }) => theme.mediaQueries.sm} {
     font-size: 25px;
     line-height: 29px;
@@ -105,7 +107,7 @@ const StyledText3 = styled(Text)`
 
 const StyledText4 = styled(Text)`
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   margin-top: 1px;
   display: none;
 
@@ -189,28 +191,6 @@ const LabelContainer2 = styled.div`
   }
 `
 
-// const FlexSwitch = styled.div`
-//   display: flex;
-//   flex-direction: row-reverse;
-//   justify-content: center;
-//   align-items: center;
-
-//   ${({ theme }) => theme.mediaQueries.sm} {
-//     flex-direction: row-reverse;
-//   }
-// `
-
-// const StyledAPRText = styled.div`
-//   font-size: 12px;
-//   line-height: 11px;
-//   letter-spacing: 1px;
-//   margin-left: 5px;
-//   margin-bottom: 2px;
-//   ${({ theme }) => theme.mediaQueries.sm} {
-//     font-size: 20px;
-//     line-height: 23px;
-//   }
-
 const ButtonContainer = styled.div`
   width: 180px;
   display: flex;
@@ -281,6 +261,8 @@ const NumberHolder = styled.div`
 
 const StyledNumber = styled.div`
   opacity: 0;
+  font-weight: 800;
+
   @media (min-width: 500px) {
     opacity: 1;
     line-height: 0px;
@@ -307,22 +289,24 @@ const CardHeading: React.FC<ExpandableSectionProps> = ({
   earnTokenImage,
   showExpandableSection,
 }) => {
-  const TranslateString = useI18n()
+  const { t } = useTranslation()
   const { userData } = pool
-  // const stakingTokenBalance = new BigNumber(userData?.stakingTokenBalance || 0)
+  const stakingTokenBalance = new BigNumber(userData?.stakingTokenBalance || 0)
   const stakedBalance = new BigNumber(userData?.stakedBalance || 0)
   const accountHasStakedBalance = stakedBalance?.toNumber() > 0
   const earnings = new BigNumber(pool.userData?.pendingReward || 0)
-  const allowance = 1 // userData?.allowance
+  const allowance = userData?.allowance
   const rawEarningsBalance = getBalanceNumber(earnings, 18)
-  const displayBalance = rawEarningsBalance ? rawEarningsBalance.toLocaleString() : '?'
+  const displayBalance = rawEarningsBalance
+    ? rawEarningsBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })
+    : '?'
   const isLoading = !pool.userData
   const { account } = useWeb3React()
-  // const bananaPerDay = BLOCKS_PER_DAY.times(new BigNumber(tokenPerBlock)).div(totalStaked).toNumber()
+  const bananaPerDay = 0
 
   const cardHeaderButton = () => {
     if (!account) {
-      return <UnlockButton />
+      return <UnlockButton sx={{ fontWeight: 600, fontSize: '11.5px' }} />
     }
     if (!allowance) {
       return (
@@ -331,15 +315,14 @@ const CardHeading: React.FC<ExpandableSectionProps> = ({
     }
     if (allowance && !accountHasStakedBalance) {
       return (
-        // <StakeAction
-        //   pool={pool}
-        //   stakingTokenBalance={stakingTokenBalance}
-        //   stakedBalance={stakedBalance}
-        //   isStaked={accountHasStakedBalance}
-        //   firstStake={!accountHasStakedBalance}
-        //   tier={tier}
-        // />
-        <></>
+        <StakeAction
+          pool={pool}
+          stakingTokenBalance={stakingTokenBalance}
+          stakedBalance={stakedBalance}
+          isStaked={accountHasStakedBalance}
+          firstStake={!accountHasStakedBalance}
+          tier={tier}
+        />
       )
     }
     return <HarvestActions earnings={earnings} sousId={sousId} isLoading={isLoading} tokenDecimals={18} />
@@ -352,25 +335,29 @@ const CardHeading: React.FC<ExpandableSectionProps> = ({
           <NumberHolder>
             <StyledNumber>{tier}</StyledNumber>
           </NumberHolder>
-          <Image rarityTier={tier} borderRadius="50%" />
+          <Image rarityTier={tier} borderRadius="50%" hideTier />
         </StyledImageHolder>
         <StyledArrow src="/images/arrow.svg" alt="arrow" />
         <StyledImage src={`/images/tokens/${earnTokenImage || `${earnToken}.svg`}`} alt={earnToken} />
       </StyledBackground>
       <StyledFlexContainer>
         <LabelContainer>
-          <StyledHeading>Tier {tier}</StyledHeading>
+          <StyledHeading>
+            {t('Tier')} {tier}
+          </StyledHeading>
           {!removed && (
-            <Text style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-              <StyledText1 fontFamily="poppins">BPD: 0</StyledText1>
+            <Text fontWeight={600} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+              <StyledText1>
+                {t('BPD')}: {bananaPerDay}
+              </StyledText1>
             </Text>
           )}
           <StyledFlexEarnedSmall>
-            <StyledText4 fontFamily="poppins" color="primary" pr="3px">
-              {TranslateString(999, `${earnToken}`)}
+            <StyledText4 color="primary" pr="3px">
+              {t(`${earnToken}`)}
             </StyledText4>
-            <StyledText2 fontFamily="poppins" color="primary" pr="3px">
-              {TranslateString(999, 'Earned')}
+            <StyledText2 color="primary" pr="3px">
+              {t('Earned')}
             </StyledText2>
             <StyledText3>{displayBalance}</StyledText3>
           </StyledFlexEarnedSmall>
@@ -378,11 +365,11 @@ const CardHeading: React.FC<ExpandableSectionProps> = ({
         <LabelContainer2>
           <StyledFlexEarned>
             <Flex>
-              <StyledText4 fontFamily="poppins" color="primary" pr="3px">
-                {TranslateString(999, `${earnToken}`)}
+              <StyledText4 color="primary" pr="3px">
+                {earnToken}
               </StyledText4>
-              <StyledText2 fontFamily="poppins" color="primary" pr="3px">
-                {TranslateString(999, 'Earned')}
+              <StyledText2 color="primary" pr="3px">
+                {t('Earned')}
               </StyledText2>
             </Flex>
             <StyledText3>{displayBalance}</StyledText3>

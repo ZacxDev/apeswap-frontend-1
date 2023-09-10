@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import BigNumber from 'bignumber.js'
 import { useWeb3React } from '@web3-react/core'
+import { ChainId } from '@ape.swap/sdk'
 import masterChefABI from 'config/abi/masterchef.json'
 import miniChefABI from 'config/abi/miniApeV2.json'
-import { dualFarmsConfig, farmsConfig } from 'config/constants'
-import { CHAIN_ID } from 'config/constants/chains'
 import multicall from 'utils/multicall'
+import { useFarms } from 'state/farms/hooks'
+import { useDualFarms } from 'state/dualFarms/hooks'
 import useRefresh from './useRefresh'
 import { useMasterChefAddress, useMiniChefAddress } from './useAddress'
 import { useMulticallContract } from './useContract'
@@ -17,6 +18,8 @@ const useFarmsWithBalance = () => {
   const multicallContract = useMulticallContract()
   const masterChefAddress = useMasterChefAddress()
   const miniChefAddress = useMiniChefAddress()
+  const farmsConfig = useFarms(null)
+  const dualFarmsConfig = useDualFarms(null)
 
   useEffect(() => {
     const fetchBSCBalances = async () => {
@@ -27,7 +30,7 @@ const useFarmsWithBalance = () => {
           params: [farm.pid, account],
         }))
 
-        const rawResults = await multicall(multicallContract, masterChefABI, calls)
+        const rawResults = await multicall(chainId, masterChefABI, calls)
         const results = farmsConfig.map((farm, index) => ({ ...farm, balance: new BigNumber(rawResults[index]) }))
 
         setFarmsWithBalances(results)
@@ -45,7 +48,7 @@ const useFarmsWithBalance = () => {
           params: [farm.pid, account],
         }))
 
-        const rawResults = await multicall(multicallContract, miniChefABI, calls)
+        const rawResults = await multicall(chainId, miniChefABI, calls)
         const results = filteredDualFarms.map((farm, index) => ({ ...farm, balance: new BigNumber(rawResults[index]) }))
 
         setFarmsWithBalances(results)
@@ -55,14 +58,23 @@ const useFarmsWithBalance = () => {
     }
 
     if (account) {
-      if (chainId === CHAIN_ID.BSC) {
+      if (chainId === ChainId.BSC) {
         fetchBSCBalances()
       }
-      if (chainId === CHAIN_ID.MATIC) {
+      if (chainId === ChainId.MATIC) {
         fetchMiniChefBalances()
       }
     }
-  }, [account, fastRefresh, multicallContract, masterChefAddress, miniChefAddress, chainId])
+  }, [
+    account,
+    fastRefresh,
+    multicallContract,
+    masterChefAddress,
+    miniChefAddress,
+    farmsConfig,
+    dualFarmsConfig,
+    chainId,
+  ])
 
   return farmsWithBalances
 }

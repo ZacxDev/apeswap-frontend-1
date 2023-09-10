@@ -4,6 +4,7 @@ import { Text } from '@apeswapfinance/uikit'
 import { getBalanceNumber } from 'utils/formatBalance'
 import useTokenBalance from 'hooks/useTokenBalance'
 import BigNumber from 'bignumber.js'
+import { useTranslation } from 'contexts/Localization'
 import { ZERO_ADDRESS } from 'config'
 import SubmitBid from './SubmitBid'
 
@@ -26,8 +27,7 @@ const BidWrapper = styled.div`
   display: flex;
   align-items: center;
   text-align: center;
-  background: F7F8F9;
-  background: ${(props) => (props.theme.isDark ? 'rgb(250, 250, 250, 0.1)' : 'rgb(250, 250, 250)')};
+  background: ${({ theme }) => theme.colors.white3};
   ${({ theme }) => theme.mediaQueries.lg} {
     top: 355px;
     margin-left: 350px;
@@ -81,7 +81,7 @@ const SubButton = styled.div`
 const ButtonText = styled(Text)`
   width: 52px;
   height: 30px;
-  font-family: Poppins;
+
   font-style: normal;
   font-weight: 600;
   font-size: 16px;
@@ -92,7 +92,7 @@ const ButtonText = styled(Text)`
 const SubText = styled(Text)`
   position: absolute;
   height: 41px;
-  font-family: Poppins;
+
   font-style: normal;
   font-weight: 500;
   font-size: 27px;
@@ -106,9 +106,9 @@ const UserBalanceWrapper = styled(Text)`
   height: 15px;
   left: 20px;
   bottom: 10px;
-  font-family: Poppins;
+
   font-style: normal;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 10px;
   line-height: 15px;
   display: flex;
@@ -127,9 +127,8 @@ const BidInput = styled.input`
   top: 5px;
   outline: none;
   border: none;
-  font-family: Poppins;
   font-style: normal;
-  font-weight: 900;
+  font-weight: 800;
   font-size: 27px;
   line-height: 10px;
   display: flex;
@@ -165,6 +164,7 @@ const Bid: React.FC<BidProps> = ({ currentBid, minBidRaise, minBidPercentage, nf
   const [bidAmount, setBidAmount] = useState(rawBidAmount + rawMinBidRaise)
   const bnbBalance = useTokenBalance(ZERO_ADDRESS)
   const rawBnbBalance = getBalanceNumber(bnbBalance).toFixed(6)
+  const { t } = useTranslation()
 
   const minBid = () => {
     setBidAmount(rawMinBidRaise)
@@ -194,7 +194,7 @@ const Bid: React.FC<BidProps> = ({ currentBid, minBidRaise, minBidPercentage, nf
       <BidWrapper>
         <BidInput type="number" value={bidAmount} onChange={updateBid} />
         <MinButton>
-          <ButtonText onClick={minBid}>Min</ButtonText>
+          <ButtonText onClick={minBid}>{t('Min')}</ButtonText>
         </MinButton>
         <PlusButton>
           <SubText onClick={addBid}>+</SubText>
@@ -202,7 +202,7 @@ const Bid: React.FC<BidProps> = ({ currentBid, minBidRaise, minBidPercentage, nf
         <SubButton>
           <SubText onClick={subBid}>-</SubText>
         </SubButton>
-        <UserBalanceWrapper>Balance: {rawBnbBalance} </UserBalanceWrapper>
+        <UserBalanceWrapper>{t('Balance: %balance%', { balance: rawBnbBalance })} </UserBalanceWrapper>
       </BidWrapper>
       <SubmitBid
         disabled={bidAmount < rawMinBidRaise}

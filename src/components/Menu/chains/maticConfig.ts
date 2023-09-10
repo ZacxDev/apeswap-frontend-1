@@ -1,63 +1,76 @@
-import { MenuEntry } from '@apeswapfinance/uikit'
-import { CHAIN_ID, NETWORK_INFO_LINK } from 'config/constants/chains'
-import { HOME, EXCHANGE, MORE_INFO } from '../constants'
+import { MenuEntry } from '@ape.swap/uikit'
+import { ContextApi } from '../../../contexts/Localization/types'
 
-const maticConfig: MenuEntry[] = [
-  HOME,
-  // {
-  //   label: 'Ape Stats',
-  //   icon: 'StatsIcon',
-  //   href: '/stats',
-  // },
-  EXCHANGE,
+const maticConfig: (t: ContextApi['t']) => MenuEntry[] = (t) => [
   {
-    label: 'Farms',
-    icon: 'FarmIcon',
-    href: '/farms',
-  },
-  {
-    label: 'Vaults',
-    icon: 'Vaults',
-    href: '/vaults',
-  },
-  //   {
-  //     label: 'Pools',
-  //     icon: 'PoolIcon',
-  //     href: '/pools',
-  //   },
-  //   {
-  //     label: 'IAO',
-  //     icon: 'IfoIcon',
-  //     href: '/iao',
-  //   },
-  //   {
-  //     label: 'GNANA',
-  //     icon: 'ApeZone',
-  //     href: '/gnana',
-  //   },
-  {
-    label: 'Info',
-    icon: 'InfoIcon',
+    label: t('Exchange'),
+    lightIcon: 'ExchangeLightImage',
+    darkIcon: 'ExchangeDarkImage',
     items: [
       {
-        label: 'Overview',
-        href: NETWORK_INFO_LINK[CHAIN_ID.MATIC],
+        label: t('Swap'),
+        href: '/swap',
+        isNew: false,
       },
       {
-        label: 'Tokens',
-        href: `${NETWORK_INFO_LINK[CHAIN_ID.MATIC]}/tokens`,
+        label: t('Liquidity'),
+        href: '/zap',
+        isNew: false,
       },
       {
-        label: 'Pairs',
-        href: `${NETWORK_INFO_LINK[CHAIN_ID.MATIC]}/pairs`,
-      },
-      {
-        label: 'Accounts',
-        href: `${NETWORK_INFO_LINK[CHAIN_ID.MATIC]}/accounts`,
+        label: t('Pro Trading'),
+        href: 'https://pro.apeswap.finance',
+        isNew: false,
       },
     ],
   },
-  MORE_INFO,
+  {
+    label: t('Farms'),
+    href: '/farms',
+    isNew: false,
+  },
+  {
+    label: t('Bonds'),
+    href: '/bonds',
+    isNew: true,
+  },
+  {
+    label: t('Explore'),
+    lightIcon: 'MoreLightImage',
+    darkIcon: 'MoreDarkImage',
+    items: [
+      {
+        label: t('ApeStats'),
+        href: '/apestats',
+        isNew: false,
+      },
+      {
+        label: t('Dashboard'),
+        href: 'protocol-dashboard',
+        isNew: false,
+      },
+      {
+        label: t('Documentation'),
+        href: 'https://apeswap.gitbook.io/apeswap-finance/',
+        isNew: false,
+      },
+      {
+        label: t('Charts'),
+        href: '/info',
+        isNew: false,
+      },
+      {
+        label: t('Governance'),
+        href: 'https://discuss.apeswap.finance',
+        isNew: false,
+      },
+      {
+        label: t('Newsletter'),
+        href: '?modal=newsletter',
+        isNew: true,
+      },
+    ],
+  },
 ]
 
 export default maticConfig

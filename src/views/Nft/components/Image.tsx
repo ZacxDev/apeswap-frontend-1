@@ -7,6 +7,8 @@ interface ImageProps {
   originalLink?: string
   rarityTier: number
   borderRadius?: string
+  hideTier?: boolean
+  imageBorderRadius?: boolean
 }
 
 interface ContainerProps {
@@ -27,7 +29,7 @@ const sway = keyframes`
     }
 `
 
-const StyledImage = styled.img`
+const StyledImage = styled.img<{ imageBorderRadius: boolean }>`
   position: absolute;
   width: 100%;
   top: 0;
@@ -35,7 +37,7 @@ const StyledImage = styled.img`
   transition: opacity 1s linear;
   height: 100%;
   object-fit: cover;
-  border-radius: 32px 32px 0 0;
+  border-radius: ${(props) => (props.imageBorderRadius ? '32px 32px 0 0' : 0)};
 `
 
 const Container = styled.div<ContainerProps>`
@@ -57,7 +59,11 @@ const TierSvg = styled.div`
   fill: rgba(255, 255, 255, 0.1);
 `
 
-const Image: React.FC<ImageProps> = ({ src, alt, rarityTier, borderRadius }) => {
+const TierNumber = styled.p`
+  font-weight: 800;
+`
+
+const Image: React.FC<ImageProps> = ({ src, alt, rarityTier, borderRadius, hideTier, imageBorderRadius }) => {
   let gradientStyle = ''
   let backgroundSize = ''
   if (rarityTier === 1) {
@@ -83,12 +89,14 @@ const Image: React.FC<ImageProps> = ({ src, alt, rarityTier, borderRadius }) => 
 
   return (
     <Container gradient={gradientStyle} backgroundSize={backgroundSize} borderRadius={borderRadius}>
-      <TierSvg>
-        <p>{rarityTier}</p>
-      </TierSvg>
-      {src && <StyledImage src={src} alt={alt} />}
+      {!hideTier && (
+        <TierSvg>
+          <TierNumber>{rarityTier}</TierNumber>
+        </TierSvg>
+      )}
+      {src && <StyledImage src={src} alt={alt} imageBorderRadius={imageBorderRadius} />}
     </Container>
   )
 }
 
-export default Image
+export default React.memo(Image)

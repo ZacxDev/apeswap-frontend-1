@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Button } from '@apeswapfinance/uikit'
-import useI18n from '../../hooks/useI18n'
+import { useTranslation } from 'contexts/Localization'
 import Input, { InputProps } from '../Input'
 
 interface TokenInputProps extends InputProps {
@@ -11,11 +11,11 @@ interface TokenInputProps extends InputProps {
 }
 
 const TokenInput: React.FC<TokenInputProps> = ({ max, symbol, onChange, onSelectMax, value }) => {
-  const TranslateString = useI18n()
+  const { t } = useTranslation()
   return (
     <StyledTokenInput>
       <StyledMaxText>
-        {max.toLocaleString()} {symbol} {TranslateString(526, 'Available')}
+        {max.toLocaleString()} {symbol} {t('Available')}
       </StyledMaxText>
       <Input
         endAdornment={
@@ -24,7 +24,7 @@ const TokenInput: React.FC<TokenInputProps> = ({ max, symbol, onChange, onSelect
             <StyledSpacer />
             <div>
               <StyledButton size="sm" onClick={onSelectMax}>
-                {TranslateString(452, 'Max')}
+                {t('Max')}
               </StyledButton>
             </div>
           </StyledTokenAdornmentWrapper>
@@ -40,7 +40,7 @@ const TokenInput: React.FC<TokenInputProps> = ({ max, symbol, onChange, onSelect
 const StyledTokenInput = styled.div``
 
 const StyledSpacer = styled.div`
-  width: ${(props) => props.theme.spacing[3]}px;
+  width: ${(props) => props.theme.spacing[2]}px;
 `
 
 const StyledTokenAdornmentWrapper = styled.div`
@@ -53,23 +53,28 @@ const StyledButton = styled(Button)`
   display: flex;
   background-color: #ffb300;
   box-shadow: none;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-size: 12px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 10px;
 `
 
 const StyledMaxText = styled.div`
   align-items: center;
-  color: ${(props) => props.theme.colors.primary};
+  color: ${({ theme }) => theme.colors.text};
   display: flex;
-  font-size: 14px;
-  font-weight: 450;
-  height: 44px;
+  font-size: 12px;
+  font-weight: 500;
+  height: 18px;
   justify-content: flex-end;
-  font-family: 'Poppins';
+  margin-bottom: 5px;
 `
 
 const StyledTokenSymbol = styled.span`
-  color: ${(props) => props.theme.colors.primary};
-  font-weight: 450;
-  font-family: 'Poppins';
+  color: ${({ theme }) => theme.colors.text};
+  font-weight: 500;
 `
 
 export default TokenInput

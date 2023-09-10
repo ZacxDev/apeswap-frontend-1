@@ -9,19 +9,21 @@ import {
   UserRejectedRequestError as UserRejectedRequestErrorWalletConnect,
   WalletConnectConnector,
 } from '@web3-react/walletconnect-connector'
-import { ConnectorNames, localStorageKey } from '@apeswapfinance/uikit'
+import { ConnectorNames, localStorageKey } from '@ape.swap/uikit'
 import { connectorsByName } from 'utils/web3React'
 import { setupNetwork } from 'utils/wallet'
 import { useNetworkChainId, useToast } from 'state/hooks'
 import { profileClear } from 'state/profile'
 
 import { useDispatch } from 'react-redux'
+import { useTranslation } from 'contexts/Localization'
 
 const useAuth = () => {
   const { activate, deactivate } = useWeb3React()
   const chainId = useNetworkChainId()
   const { toastError } = useToast()
   const dispatch = useDispatch()
+  const { t } = useTranslation()
 
   const login = useCallback((connectorID: ConnectorNames) => {
     const connector = connectorsByName[connectorID]
@@ -35,7 +37,10 @@ const useAuth = () => {
         } else {
           window.localStorage.removeItem(localStorageKey)
           if (error instanceof NoEthereumProviderError || error instanceof NoBscProviderError) {
-            toastError('Provider Error', 'No provider was found')
+            toastError(t("Browser Error: Please use a crypto wallet app's built-in browser to connect to ApeSwap."), {
+              text: 'Learn More',
+              url: 'https://apeswap.gitbook.io/apeswap-finance/product-and-features/wallets/how-to-use-apeswap-on-mobile-devices',
+            })
           } else if (
             error instanceof UserRejectedRequestErrorInjected ||
             error instanceof UserRejectedRequestErrorWalletConnect
@@ -44,9 +49,9 @@ const useAuth = () => {
               const walletConnector = connector as WalletConnectConnector
               walletConnector.walletConnectProvider = null
             }
-            toastError('Authorization Error', 'Please authorize to access your account')
+            toastError(t('Wallet Connection Error: Please complete the authorization using your wallet.'))
           } else {
-            toastError(error.name, error.message)
+            toastError(`${error.name}, ${error.message}`)
           }
         }
       })

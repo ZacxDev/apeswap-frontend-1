@@ -7,22 +7,13 @@ export interface InputProps {
   placeholder?: string
   startAdornment?: React.ReactNode
   value: string
-}
-
-const Input: React.FC<InputProps> = ({ endAdornment, onChange, placeholder, startAdornment, value }) => {
-  return (
-    <StyledInputWrapper>
-      {!!startAdornment && startAdornment}
-      <StyledInput placeholder={placeholder} value={value} onChange={onChange} />
-      {!!endAdornment && endAdornment}
-    </StyledInputWrapper>
-  )
+  height?: string
 }
 
 const StyledInputWrapper = styled.div`
   align-items: center;
-  background-color: ${(props) => props.theme.colors.input};
-  border-radius: ${(props) => props.theme.radii.default};
+  background: ${({ theme }) => theme.colors.white4};
+  border-radius: 10px;
   display: flex;
   height: 72px;
   padding: 0 ${(props) => props.theme.spacing[3]}px;
@@ -32,13 +23,28 @@ const StyledInput = styled.input`
   width: 100%;
   background: none;
   border: 0;
-  color: ${(props) => props.theme.colors.primary};
-  font-size: 18px;
+  color: ${({ theme }) => (theme.isDark ? theme.colors.primaryBright : theme.colors.primary)};
   flex: 1;
   height: 56px;
   margin: 0;
   padding: 0;
   outline: none;
+  font-weight: 800;
+  font-size: 22px;
+
+  &::placeholder {
+    color: ${({ theme }) => !theme.isDark && theme.colors.gray};
+  }
 `
+
+const Input: React.FC<InputProps> = ({ endAdornment, onChange, placeholder, startAdornment, value, height }) => {
+  return (
+    <StyledInputWrapper style={{ height: height ?? null }}>
+      {!!startAdornment && startAdornment}
+      <StyledInput placeholder={placeholder} value={value} onChange={onChange} />
+      {!!endAdornment && endAdornment}
+    </StyledInputWrapper>
+  )
+}
 
 export default Input

@@ -4,8 +4,9 @@ import Web3 from 'web3'
 import { useWeb3React } from '@web3-react/core'
 import { Button, Input, Modal, Text } from '@apeswapfinance/uikit'
 import { Nft } from 'config/constants/types'
-import useI18n from 'hooks/useI18n'
+import { useTranslation } from 'contexts/Localization'
 import { useNonFungibleApes } from 'hooks/useContract'
+import UnderlinedButton from 'components/UnderlinedButton'
 import InfoRow from './InfoRow'
 
 interface TransferNftModalProps {
@@ -36,11 +37,11 @@ const Label = styled.label`
   margin-top: 24px;
 `
 
-const TransferNftModal: React.FC<TransferNftModalProps> = ({ nft, tokenId, onSuccess, onDismiss }) => {
+const TransferNftModal: React.FC<TransferNftModalProps> = ({ nft, tokenId, onDismiss }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [value, setValue] = useState('')
   const [error, setError] = useState(null)
-  const TranslateString = useI18n()
+  const { t } = useTranslation()
   const { account } = useWeb3React()
   const nonFungibleApesContract = useNonFungibleApes()
 
@@ -49,22 +50,16 @@ const TransferNftModal: React.FC<TransferNftModalProps> = ({ nft, tokenId, onSuc
       const isValidAddress = Web3.utils.isAddress(value)
 
       if (!isValidAddress) {
-        setError(TranslateString(999, 'Please enter a valid wallet address'))
+        setError(t('Please enter a valid wallet address'))
       } else {
         setIsLoading(true)
-        await nonFungibleApesContract.methods
-          .safeTransferFrom(account, value, tokenId)
-          .send({ from: account })
-          .on('transactionHash', (tx) => {
-            onDismiss()
-            onSuccess()
-            return tx
-          })
-          .on('error', () => {
-            console.warn(error)
-            setError('Unable to transfer NFT')
-            setIsLoading(false)
-          })
+        await nonFungibleApesContract['safeTransferFrom(address,address,uint256)'](account, value, tokenId).then(
+          (trx) => {
+            return trx.wait()
+          },
+        )
+        setIsLoading(false)
+        onDismiss()
       }
     } catch (err) {
       console.warn('Unable to transfer NFT:', err)
@@ -78,23 +73,23 @@ const TransferNftModal: React.FC<TransferNftModalProps> = ({ nft, tokenId, onSuc
   }
 
   return (
-    <Modal title={TranslateString(999, 'Transfer NFT')} onDismiss={onDismiss}>
+    <Modal title={t('Transfer NFT')} onDismiss={onDismiss}>
       <ModalContent>
         {error && (
-          <Text color="failure" mb="8px">
+          <Text color="error" mb="8px">
             {error}
           </Text>
         )}
         <InfoRow>
-          <Text>{TranslateString(999, 'Transferring')}:</Text>
+          <Text>{t('Transferring')}:</Text>
           <Value>{`1x "${nft.name}" NFT`}</Value>
         </InfoRow>
-        <Label htmlFor="transferAddress">{TranslateString(999, 'Receiving address')}:</Label>
+        <Label htmlFor="transferAddress">{t('Receiving address')}:</Label>
         <Input
           id="transferAddress"
           name="address"
           type="text"
-          placeholder={TranslateString(999, 'Paste address')}
+          placeholder={t('Paste address')}
           value={value}
           onChange={handleChange}
           isWarning={error}
@@ -102,12 +97,10 @@ const TransferNftModal: React.FC<TransferNftModalProps> = ({ nft, tokenId, onSuc
         />
       </ModalContent>
       <Actions>
-        <Button fullWidth variant="secondary" onClick={onDismiss}>
-          {TranslateString(462, 'Cancel')}
-        </Button>
         <Button fullWidth onClick={handleConfirm} disabled={!account || isLoading || !value}>
-          {TranslateString(464, 'Confirm')}
+          {t('Confirm')}
         </Button>
+        <UnderlinedButton text={t('Cancel')} handleClick={onDismiss} />
       </Actions>
     </Modal>
   )

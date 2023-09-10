@@ -1,15 +1,26 @@
+import { ThunkAction } from 'redux-thunk'
+import { AnyAction } from '@reduxjs/toolkit'
 import { Toast } from '@apeswapfinance/uikit'
 import BigNumber from 'bignumber.js'
 import {
-  Address,
   FarmConfig,
-  Nft,
   PoolConfig,
   NfaStakingPoolConfig,
-  Team,
   VaultConfig,
   DualFarmConfig,
-} from 'config/constants/types'
+  JungleFarmConfig,
+  BillsConfig,
+  Token,
+} from '@ape.swap/apeswap-lists'
+import { Address, Nft, Nfb, Team, LiveIfo, Decimals } from 'config/constants/types'
+import { ProtocolDashboardState } from './protocolDashboard/types'
+import { ApiResponse } from './statsPage/types'
+import { InfoState } from './info/types'
+import { MigrationTimerState } from './migrationTimer/types'
+import { ChainId } from '@ape.swap/sdk'
+import { MasterApeMigrationInterface } from './masterApeMigration/types'
+
+export type AppThunk<ReturnType = void> = ThunkAction<ReturnType, State, unknown, AnyAction>
 
 export interface Farm extends FarmConfig {
   tokenAmount?: BigNumber
@@ -18,6 +29,12 @@ export interface Farm extends FarmConfig {
   lpTotalInQuoteToken?: BigNumber
   tokenPriceVsQuote?: BigNumber
   poolWeight?: BigNumber
+  totalLpStakedUsd?: string
+  apr?: string
+  apy?: string
+  lpApr?: string
+  bananaPrice?: number
+  lpValueUsd?: number
   userData?: {
     allowance: BigNumber
     tokenBalance: BigNumber
@@ -38,6 +55,8 @@ export interface DualFarm extends DualFarmConfig {
   poolWeight?: BigNumber
   multiplier?: string
   apr?: number
+  apy?: string
+  lpApr?: string
   totalStaked?: string
   userData?: {
     allowance: BigNumber
@@ -46,6 +65,21 @@ export interface DualFarm extends DualFarmConfig {
     miniChefEarnings: BigNumber
     rewarderEarnings: BigNumber
   }
+}
+
+export interface JungleFarm extends JungleFarmConfig {
+  totalStaked?: BigNumber
+  startBlock?: number
+  endBlock?: number
+  apr?: number
+  apy?: string
+  userData?: {
+    allowance: BigNumber
+    stakingTokenBalance: BigNumber
+    stakedBalance: BigNumber
+    pendingReward: BigNumber
+  }
+  lpData?: any
 }
 
 export interface Pool extends PoolConfig {
@@ -62,12 +96,67 @@ export interface Pool extends PoolConfig {
   lpData?: any
 }
 
+export interface UserBillNft {
+  image: string
+  tokenId: string
+  attributes: {
+    trait_type: string
+    value: string
+  }[]
+}
+
+export interface UserBill {
+  address: string
+  id: string
+  vesting: string
+  payout: string
+  truePricePaid: string
+  lastBlockTimestamp: string
+  pendingRewards: string
+  billNftAddress: string
+  nftData?: UserBillNft
+}
+
+export interface Bills extends BillsConfig {
+  price?: string
+  priceUsd?: string
+  vestingTime?: string
+  discount?: string
+  currentDebt?: string
+  currentFee?: string
+  debtDecay?: string
+  debtRatio?: string
+  totalDebt?: string
+  totalPayoutGiven?: string
+  totalPrincipleBilled?: string
+  controlVariable?: string
+  minimumPrice?: string
+  maxPayout?: string
+  maxDebt?: string
+  lpPriceUsd?: number
+  earnTokenPrice?: number
+  billNftAddress?: string
+  userData?: {
+    allowance: string
+    stakingTokenBalance: string
+    bills?: UserBill[]
+  }
+  userOwnedBillsData?: UserBill[]
+  userOwnedBillsNftData?: UserBillNft[]
+  maxTotalPayOut?: string
+  lpPrice?: number
+  maxPayoutTokens?: string
+}
+
 export interface Vault extends VaultConfig {
   totalStaked?: string
   totalAllocPoint?: string
+  keeperFee?: string
+  withdrawFee?: string
   allocPoint?: string
   weight?: number
   stakeTokenPrice?: number
+  rewardTokenPrice?: number
   strategyPairBalance?: string
   strategyPairBalanceFixed?: string
   totalInQuoteToken?: string
@@ -83,13 +172,13 @@ export interface Vault extends VaultConfig {
     tokenBalance: string
     stakedBalance: string
     stakedWantBalance: string
+    pendingRewards: string
   }
 }
 
 export interface NfaStakingPool extends NfaStakingPoolConfig {
   totalStaked?: BigNumber
   startBlock?: number
-  endBlock?: number
   apr?: number
   userData?: {
     allowance: boolean
@@ -102,12 +191,23 @@ export interface NfaStakingPool extends NfaStakingPoolConfig {
 
 export interface Profile {
   ownedNfts: Nft[]
-  rarestNft: Nft
+  rarestNft: Nft | Nfb
 }
 
 export interface Network {
   chainId: number
   chainIdFromUrl?: boolean
+}
+
+export interface BlockState {
+  currentBlock: number
+  initialBlock: number
+}
+
+export interface Tag {
+  pid: number
+  text: string
+  color: string
 }
 
 export interface Stats {
@@ -192,7 +292,48 @@ export interface HomepageData {
   circulatingSupply: number
   gnanaCirculatingSupply: number
   burntAmount: number
+  totalVolume: number
+  partnerCount?: number
+  bondingPartnerCount?: number
 }
+
+export interface HomepageTokenStats {
+  tokenTicker: string
+  tokenPrice: number
+  percentChange: number
+  contractAddress: string
+  logoUrl: string
+}
+
+export interface NewsCardType {
+  id: number
+  cardPosition: number
+  cardImageUrl: any
+  CardLink: string
+  StartTime: string
+  EndTime: string
+  isModal: boolean
+}
+
+export interface FarmLpAprsType {
+  chainId: number
+  lpAprs: {
+    pid: number
+    lpApr: number
+    lpAddress?: string
+  }[]
+}
+
+export interface LaunchCalendarCard {
+  image1: any
+  image2?: any
+  textLine1: string
+  textLine2?: string
+  textLine3?: string
+  launchTime: string
+}
+
+export type Nfa = Nft
 
 export interface PoolOverall {
   address: string
@@ -234,8 +375,133 @@ export interface FarmOverall {
   rewardTokenSymbol: string
 }
 
+// Start IAZO
+
+export interface IazoDefaultSettings {
+  adminAddress: string
+  feeAddress: string
+  burnAddress: string
+  baseFee: string
+  maxBaseFee: string
+  iazoTokenFee: string
+  maxIazoTokenFee: string
+  nativeCreationFee: string
+  minIazoLength: string
+  maxIazoLength: string
+  minLockPeriod: string
+}
+
+export interface IazoTokenInfo {
+  address: string
+  name: string
+  symbol: string
+  decimals: string
+  totalSupply?: string
+}
+
+export interface IazoFeeInfo {
+  feeAddress: string
+  baseFee: string
+  iazoTokenFee: string
+}
+
+export interface IazoTimeInfo {
+  startTime: string
+  activeTime: string
+  lockPeriod: string
+}
+
+export interface IazoStatus {
+  lpGenerationComplete: boolean
+  forceFailed: boolean
+  totalBaseCollected: string
+  totalTokensSold: string
+  totalTokensWithdraw: string
+  totalBaseWithdraw: string
+  numBuyers: string
+}
+
+export interface ServiceData {
+  id: number
+  apr?: number
+  apy?: number
+  discount?: number
+  link: string
+  marketName?: string
+  marketAddress?: string
+  lpTokenName?: string
+  earnTokenName?: string
+  stakeToken?: {
+    name: string
+    address: string
+  }
+  rewardToken?: {
+    name: string
+    address: string
+  }
+  token?: {
+    name: string
+    address: string
+  }
+}
+
+export interface IazoSocialInfo {
+  telegram: string
+  twitter: string
+  website: string
+  whitepaper: string
+  tokenImage: string
+  medium: string
+  description: string
+}
+
+export interface TagLink {
+  link: string
+  position: number
+  title: string
+}
+
+export interface IazoTags {
+  tagLinks: TagLink[]
+  tagName: string
+  tagIcon: string
+}
+
+export type IazoState = 'QUEUED' | 'ACTIVE' | 'SUCCESS' | 'HARD_CAP_MET' | 'FAILED'
+
+export interface Iazo {
+  iazoContractAddress: string
+  iazoOwnerAddress: string
+  iazoSaleInNative?: boolean
+  tokenPrice: string
+  amount: string
+  hardcap: string
+  softcap: string
+  maxSpendPerBuyer: string
+  liquidityPercent: string
+  listingPrice: string
+  iazoState: IazoState
+  burnRemain: boolean
+  feeInfo: IazoFeeInfo
+  timeInfo: IazoTimeInfo
+  status: IazoStatus
+  baseToken: IazoTokenInfo
+  iazoToken: IazoTokenInfo
+  isRegistered?: boolean
+  socialInfo?: IazoSocialInfo
+  iazoTags?: IazoTags[]
+}
+
 export interface TokenPrices {
   symbol: string
+  address: Address
+  price: number
+  decimals: Decimals
+}
+
+export interface LpTokenPrices {
+  symbol: string
+  pid: number
   address: Address
   price: number
   decimals: number
@@ -251,12 +517,28 @@ export interface FarmsState {
   data: Farm[]
 }
 
+export interface FarmsV2State extends FarmsState {}
+
 export interface PoolsState {
   data: Pool[]
 }
 
+export interface NfaState {
+  isInitialized: boolean
+  isLoading: boolean
+  data: Nfa[]
+}
+
 export interface DualFarmsState {
   data: DualFarm[]
+}
+
+export interface JungleFarmsState {
+  data: Partial<Record<ChainId, JungleFarm[]>>
+}
+
+export interface BillsState {
+  data: Partial<Record<ChainId, Bills[]>>
 }
 
 export interface NetworkState {
@@ -271,6 +553,8 @@ export interface VaultsState {
   data: Vault[]
 }
 
+export interface VaultsV3State extends VaultsState {}
+
 export interface NfaStakingPoolsState {
   data: NfaStakingPool[]
 }
@@ -281,10 +565,26 @@ export interface ProfileState {
   data: Profile
 }
 
+export interface TagsType {
+  [key: string]: any
+}
+
+export interface OrderingType {
+  [key: string]: any
+}
+
 export interface StatsState {
   isInitialized: boolean
   isLoading: boolean
   HomepageData: HomepageData
+  HomepageTokenStats: HomepageTokenStats[]
+  HomepageNews: NewsCardType[]
+  HomepageLaunchCalendar: LaunchCalendarCard[]
+  HomepageServiceStats: ServiceData[]
+  FarmLpAprs: FarmLpAprsType
+  Tags: TagsType
+  Ordering: OrderingType
+  LiveIfo: LiveIfo[]
   data: Stats
 }
 
@@ -295,15 +595,30 @@ export interface AuctionsState {
 }
 
 export interface TokenPricesState {
+  isTokensInitialized: boolean
   isInitialized: boolean
   isLoading: boolean
+  tokens: Token[]
+  bananaPrice: string
   data: TokenPrices[]
+}
+export interface LpTokenPricesState {
+  isInitialized: boolean
+  isLoading: boolean
+  data: LpTokenPrices[]
 }
 
 export interface StatsOverallState {
   isInitialized: boolean
   isLoading: boolean
   data: StatsOverall
+}
+
+export interface IazosState {
+  isInitialized: boolean
+  isLoading: boolean
+  iazoData: Iazo[]
+  iazoDefaultSettings: IazoDefaultSettings
 }
 
 export type TeamResponse = {
@@ -328,6 +643,8 @@ export interface TeamsState {
 
 export interface State {
   farms: FarmsState
+  farmsV2: FarmsV2State
+  block: BlockState
   toasts: ToastsState
   pools: PoolsState
   profile: ProfileState
@@ -336,8 +653,19 @@ export interface State {
   teams: TeamsState
   auctions: AuctionsState
   vaults: VaultsState
+  vaultsV3: VaultsV3State
   tokenPrices: TokenPricesState
+  lpTokenPrices: LpTokenPricesState
+  iazos: IazosState
   network: NetworkState
   nfaStakingPools: NfaStakingPoolsState
   dualFarms: DualFarmsState
+  jungleFarms: JungleFarmsState
+  bills: BillsState
+  nfas: NfaState
+  protocolDashboard: ProtocolDashboardState
+  userStats: ApiResponse
+  info: InfoState
+  migrationTimer: MigrationTimerState
+  masterApeMigration: MasterApeMigrationInterface
 }

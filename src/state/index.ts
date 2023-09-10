@@ -1,31 +1,27 @@
 import { configureStore } from '@reduxjs/toolkit'
-import farmsReducer from './farms'
-import toastsReducer from './toasts'
-import poolsReducer from './pools'
-import profileReducer from './profile'
-import statsReducer from './stats'
-import statsOverallReducer from './statsOverall'
-import auctionReducer from './auction'
-import vaultReducer from './vaults'
-import tokenPricesReducer from './tokenPrices'
-import networkReducer from './network'
-import nfaStakingPoolsReducer from './nfaStakingPools'
-import dualFarmsReducer from './dualFarms'
+import { setupListeners } from '@reduxjs/toolkit/query/react'
+import { load, save } from 'redux-localstorage-simple'
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import reducer from './reducer'
+import updateVersion from './global/actions'
 
-export default configureStore({
-  devTools: process.env.NODE_ENV !== 'production',
-  reducer: {
-    farms: farmsReducer,
-    toasts: toastsReducer,
-    pools: poolsReducer,
-    profile: profileReducer,
-    stats: statsReducer,
-    statsOverall: statsOverallReducer,
-    auctions: auctionReducer,
-    vaults: vaultReducer,
-    tokenPrices: tokenPricesReducer,
-    network: networkReducer,
-    nfaStakingPools: nfaStakingPoolsReducer,
-    dualFarms: dualFarmsReducer,
-  },
+const PERSISTED_KEYS: string[] = ['user', 'transactions', 'lists']
+
+const store = configureStore({
+  reducer,
+  middleware: (getDefaultMiddleware) => [
+    ...getDefaultMiddleware({ thunk: true }).concat(save({ states: PERSISTED_KEYS, debounce: 1000 })),
+  ],
+  preloadedState: load({ states: PERSISTED_KEYS }),
 })
+
+store.dispatch(updateVersion())
+
+setupListeners(store.dispatch)
+
+export type AppState = ReturnType<typeof store.getState>
+export type AppDispatch = typeof store.dispatch
+export const useAppDispatch = () => useDispatch()
+export const useAppSelector: TypedUseSelectorHook<AppState> = useSelector
+
+export default store

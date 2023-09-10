@@ -1,11 +1,10 @@
 import React from 'react'
-import styled from 'styled-components'
-import { Text, Button, Input, InputProps, Flex, Link } from '@apeswapfinance/uikit'
-import useI18n from '../../hooks/useI18n'
+import styled from '@emotion/styled'
+import { Text, Button, Input, InputProps, Flex } from '@apeswapfinance/uikit'
+import { useTranslation } from '../../contexts/Localization'
 
 interface ModalInputProps {
   max: string
-  symbol: string
   onSelectMax?: () => void
   onChange: (e: React.FormEvent<HTMLInputElement>) => void
   placeholder?: string
@@ -15,20 +14,11 @@ interface ModalInputProps {
   displayDecimals?: number
 }
 
-const getBoxShadow = ({ isWarning = false, theme }) => {
-  if (isWarning) {
-    return theme.shadows.warning
-  }
-
-  return theme.shadows.inset
-}
-
 const StyledTokenInput = styled.div<InputProps>`
   display: flex;
   flex-direction: column;
-  background-color: ${({ theme }) => theme.colors.input};
+  background-color: ${({ theme }) => theme.colors.white3};
   border-radius: 16px;
-  box-shadow: ${getBoxShadow};
   color: ${({ theme }) => theme.colors.text};
   padding: 8px 16px 8px 0;
   width: 100%;
@@ -36,38 +26,23 @@ const StyledTokenInput = styled.div<InputProps>`
 
 const StyledInput = styled(Input)`
   box-shadow: none;
-  width: 60px;
-  margin: 0 8px;
-  padding: 0 8px;
-
-  ${({ theme }) => theme.mediaQueries.xs} {
-    width: 80px;
-  }
-
-  ${({ theme }) => theme.mediaQueries.sm} {
-    width: auto;
-  }
+  border: none;
+  width: 100%;
+  font-weight: 800;
+  background-color: ${({ theme }) => theme.colors.white3};
 `
 
-const StyledErrorMessage = styled(Text)`
-  position: absolute;
-  bottom: -22px;
-  a {
-    display: inline;
-  }
+const StyledButton = styled(Button)`
+  border-radius: 6px;
+  color: ${({ theme }) => theme.colors.primaryBright};
+  font-weight: 500;
+  font-size: 12px;
+  padding: 3px 10px;
+  height: 22px;
 `
 
-const ModalInput: React.FC<ModalInputProps> = ({
-  max,
-  symbol,
-  onChange,
-  onSelectMax,
-  value,
-  addLiquidityUrl,
-  inputTitle,
-  displayDecimals,
-}) => {
-  const TranslateString = useI18n()
+const ModalInput: React.FC<ModalInputProps> = ({ max, onChange, onSelectMax, value, inputTitle, displayDecimals }) => {
+  const { t } = useTranslation()
   const isBalanceZero = max === '0' || !max
 
   const displayBalance = isBalanceZero ? '0' : parseFloat(max).toFixed(displayDecimals || 4)
@@ -75,28 +50,21 @@ const ModalInput: React.FC<ModalInputProps> = ({
   return (
     <div style={{ position: 'relative' }}>
       <StyledTokenInput isWarning={isBalanceZero}>
-        <Flex justifyContent="space-between" pl="16px">
-          <Text fontSize="14px">{inputTitle}</Text>
-          <Text fontSize="14px">
-            {TranslateString(999, 'Balance')}: {displayBalance.toLocaleString()}
+        <Flex justifyContent="space-between" alignItems="flex-end" pl="16px">
+          <Text fontSize="14px" fontWeight={800}>
+            {inputTitle}
+          </Text>
+          <Text fontSize="16px" fontWeight={500}>
+            {t('Balance')}: {displayBalance.toLocaleString()}
           </Text>
         </Flex>
-        <Flex alignItems="flex-end" justifyContent="space-around">
+        <Flex alignItems="center" justifyContent="space-between" mt="5px">
           <StyledInput onChange={onChange} placeholder="0" value={value} />
-          <Button size="sm" onClick={onSelectMax} mr="8px">
-            {TranslateString(452, 'Max')}
-          </Button>
-          <Text fontSize="16px">{symbol}</Text>
+          <StyledButton size="sm" onClick={onSelectMax} ml="1px">
+            {t('Max')}
+          </StyledButton>
         </Flex>
       </StyledTokenInput>
-      {isBalanceZero && (
-        <StyledErrorMessage fontSize="14px" color="failure">
-          No tokens to stake:{' '}
-          <Link fontSize="14px" bold={false} href={addLiquidityUrl} external color="failure">
-            {TranslateString(999, 'get')} {symbol}
-          </Link>
-        </StyledErrorMessage>
-      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { Nft } from 'config/constants/types'
 import { Text } from '@apeswapfinance/uikit'
+import { useTranslation } from 'contexts/Localization'
 
 interface MobileDescriptionProps {
   nfa: Nft
@@ -27,7 +28,7 @@ const Stats = styled.div`
   border: 1px solid ${(props) => props.theme.colors.text};
   box-sizing: border-box;
   border-radius: 25px;
-  font-family: Poppins;
+
   font-style: normal;
   font-weight: normal;
   font-size: 12px;
@@ -48,9 +49,8 @@ const AttributesWrapper = styled.div`
 `
 
 const Attribute = styled(Text)`
-  font-family: Poppins;
   font-style: normal;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 14px;
   line-height: 21px;
   letter-spacing: 0.05em;
@@ -58,20 +58,37 @@ const Attribute = styled(Text)`
 `
 
 const MobileDescription: React.FC<MobileDescriptionProps> = ({ nfa }) => {
+  const { t } = useTranslation()
   return (
     <>
       <DescriptionWrapper>
         <StatsWrapper>
-          <Stats>Tier {nfa.attributes.rarityTierNumber}</Stats>
-          <Stats>Rarity {nfa.attributes.rarityOverallRank} / 1000</Stats>
+          <Stats>
+            {t('Tier')} {nfa.attributes.rarityTierNumber}
+          </Stats>
+          <Stats>
+            {t('Rarity')} {nfa.attributes.rarityOverallRank} / 1000
+          </Stats>
         </StatsWrapper>
         <AttributesWrapper>
-          <Attribute>Base Color: {nfa.attributes.baseColor}</Attribute>
-          <Attribute>Face Color: {nfa.attributes.faceColor}</Attribute>
-          <Attribute>Frame: {nfa.attributes.frames}</Attribute>
-          <Attribute>Mouth: {nfa.attributes.mouths}</Attribute>
-          <Attribute>Eyes: {nfa.attributes.eyes}</Attribute>
-          <Attribute>Hat: {nfa.attributes.hats}</Attribute>
+          <Attribute>
+            {t('Base Color')}: {nfa.attributes.baseColor}
+          </Attribute>
+          <Attribute>
+            {t('Face Color')}: {nfa.attributes.faceColor}
+          </Attribute>
+          <Attribute>
+            {t('Frame')}: {nfa.attributes.frames}
+          </Attribute>
+          <Attribute>
+            {t('Mouth')}: {nfa.attributes.mouths}
+          </Attribute>
+          <Attribute>
+            {t('Eyes')}: {nfa.attributes.eyes}
+          </Attribute>
+          <Attribute>
+            {t('Hat')}: {nfa.attributes.hats}
+          </Attribute>
         </AttributesWrapper>
       </DescriptionWrapper>
     </>

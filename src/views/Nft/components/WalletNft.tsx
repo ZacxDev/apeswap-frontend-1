@@ -3,7 +3,7 @@ import { Nft } from 'config/constants/types'
 import styled from 'styled-components'
 import { Link } from 'react-router-dom'
 import { Text, Button, useModal } from '@apeswapfinance/uikit'
-import useI18n from 'hooks/useI18n'
+import { useTranslation } from 'contexts/Localization'
 import Image from './Image'
 import TransferNftModal from './TransferNftModal'
 import { NftProviderContext } from '../contexts/NftProvider'
@@ -63,8 +63,12 @@ const Row = styled.div`
   margin-top: 10px;
 `
 
+const StyledText = styled(Text)`
+  font-weight: 800;
+`
+
 const WalletNft: React.FC<NftCardProps> = ({ nft }) => {
-  const TranslateString = useI18n()
+  const { t } = useTranslation()
   const { reInitialize } = useContext(NftProviderContext)
   const nfaAttributes = [
     'Face',
@@ -97,21 +101,21 @@ const WalletNft: React.FC<NftCardProps> = ({ nft }) => {
         <Link to={`/nft/${nft.index}`}>
           <CardFlipFront>
             <Image src={nft.image} alt={nft.image} rarityTier={nft.attributes.rarityTierNumber} />
-            <Text fontSize="20px" paddingTop="20px" color="subtle">
+            <StyledText fontSize="20px" paddingTop="20px" color="subtle">
               {nft.name} - #{pad(`${nft.index}`, '4')}
-            </Text>
+            </StyledText>
           </CardFlipFront>
         </Link>
         <CardFlipBack>
           <Link to={`/nft/${nft.index}`}>
             {Object.keys(nft.attributes).map((key, index) => (
               <Row key={key}>
-                <Text as="p" color="subtle" style={{ paddingLeft: '10px', textAlign: 'left' }}>
+                <StyledText as="p" color="subtle" style={{ paddingLeft: '10px', textAlign: 'left' }}>
                   {nfaAttributes[index]}:
-                </Text>
-                <Text as="p" color="subtle" style={{ paddingRight: '10px', textAlign: 'right' }}>
+                </StyledText>
+                <StyledText as="p" color="subtle" style={{ paddingRight: '10px', textAlign: 'right' }}>
                   {nft.attributes[key]}
-                </Text>
+                </StyledText>
               </Row>
             ))}
           </Link>
@@ -127,7 +131,7 @@ const WalletNft: React.FC<NftCardProps> = ({ nft }) => {
             }}
             onClick={onPresentTransferModal}
           >
-            {TranslateString(999, 'Transfer')}
+            {t('Transfer')}
           </Button>
         </CardFlipBack>
       </CardFlipInner>

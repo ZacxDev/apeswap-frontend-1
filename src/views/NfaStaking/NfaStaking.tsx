@@ -1,26 +1,16 @@
 import React, { useState, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import BigNumber from 'bignumber.js'
-import styled, { keyframes } from 'styled-components'
-import { Heading, Text, Card, Checkbox } from '@apeswapfinance/uikit'
-import useI18n from 'hooks/useI18n'
+import styled from 'styled-components'
+import { Text, Card, Checkbox } from '@apeswapfinance/uikit'
 import { partition } from 'lodash'
-import useWindowSize, { Size } from 'hooks/useDimensions'
-import { useNfaStakingPools, usePollNfaStakingData } from 'state/hooks'
+import { useSetNfaStakingPools, usePollNfaStakingData, useNfaStakingPools } from 'state/nfaStakingPools/hooks'
 import Page from 'components/layout/Page'
-import SearchInput from '../Pools/components/SearchInput'
+import Banner from 'components/Banner'
+import { useTranslation } from 'contexts/Localization'
+import SearchInput from '../PoolsLegacy/components/SearchInput'
 import PoolCard from './components/PoolCard/PoolCard'
-
-const float = keyframes`
-  0% {transform: translate3d(0px, 0px, 0px);}
-  50% {transform: translate3d(50px, 0px, 0px);}
-  100% {transform: translate3d(0px, 0px, 0px);}
-`
-const floatSM = keyframes`
-  0% {transform: translate3d(0px, 0px, 0px);}
-  50% {transform: translate3d(10px, 0px, 0px);}
-  100% {transform: translate3d(0px, 0px, 0px);}
-`
+import { CenterCard, InnerContentText, PaddedCard, TopCon, WarningHeader } from 'views/ApeZone/styles'
 
 const ControlContainer = styled(Card)`
   display: flex;
@@ -31,7 +21,6 @@ const ControlContainer = styled(Card)`
   flex-direction: column;
   overflow: visible;
   padding-bottom: 10px;
-  transform: translateY(-85px);
 
   ${({ theme }) => theme.mediaQueries.md} {
     flex-direction: row;
@@ -39,20 +28,21 @@ const ControlContainer = styled(Card)`
     padding: 0px;
     justify-content: flex-start;
     padding-left: 50px;
-    transform: translateY(-60px);
   }
 `
 
 const ToggleWrapper = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center
+  justify-content: center;
   margin-left: 0px;
   cursor: pointer;
   ${Text} {
     margin-left: 4px;
-  ${({ theme }) => theme.mediaQueries.md} { margin-left: 8px;}
-  }
+    ${({ theme }) => theme.mediaQueries.md} {
+      margin-left: 8px;
+    }
+  } ;
 `
 
 const ToggleContainer = styled.div`
@@ -122,73 +112,8 @@ const ViewControls = styled.div`
   }
 `
 
-const HeadingContainer = styled.div`
-  max-width: 1024px;
-  margin-left: auto;
-  margin-right: auto;
-`
-
-const Header = styled.div`
-  position: relative;
-  overflow-y: hidden;
-  overflow-x: hidden;
-  padding-top: 36px;
-  padding-left: 10px;
-  padding-right: 10px;
-  background-image: ${({ theme }) =>
-    theme.isDark ? 'url(/images/pool-background-night.svg)' : 'url(/images/pool-background-day.svg)'};
-  background-repeat: no-repeat;
-  background-size: cover;
-  height: 250px;
-  background-position: center;
-
-  ${({ theme }) => theme.mediaQueries.md} {
-    height: 300px;
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-
-  ${({ theme }) => theme.mediaQueries.lg} {
-    padding-left: 10px;
-    padding-right: 10px;
-    height: 300px;
-  }
-`
-
-const PoolMonkey = styled.div`
-  background-image: ${({ theme }) =>
-    theme.isDark ? 'url(/images/nfa-pool-ape-night.svg)' : 'url(/images/nfa-pool-ape-day.svg)'};
-  width: 100%;
-  height: 100%;
-  background-size: contain;
-  background-repeat: no-repeat;
-`
-
-const MonkeyWrapper = styled.div`
-  position: absolute;
-  width: 200px;
-  height: 245px;
-  margin-left: auto;
-  margin-right: auto;
-  bottom: 0px;
-  right: 0px;
-  animation: 5s ${floatSM} linear infinite;
-  ${({ theme }) => theme.mediaQueries.md} {
-    padding-left: 24px;
-    padding-right: 24px;
-    animation: 10s ${float} linear infinite;
-  }
-  ${({ theme }) => theme.mediaQueries.lg} {
-    width: 600px;
-    height: 900px;
-    top: ${({ theme }) => (theme.isDark ? '-90px' : '-90px')};
-    right: 0;
-    animation: 10s ${float} linear infinite;
-  }
-`
-
 const StyledText = styled(Text)`
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12px;
 
   ${({ theme }) => theme.mediaQueries.lg} {
@@ -208,11 +133,6 @@ const StyledCheckbox = styled(Checkbox)<CheckboxProps>`
 
 const CardContainer = styled.div`
   margin-top: 17px;
-
-  transform: translateY(-85px);
-  ${({ theme }) => theme.mediaQueries.md} {
-    transform: translateY(-60px);
-  }
 `
 
 const ButtonCheckWrapper = styled.div`
@@ -226,27 +146,6 @@ const ButtonCheckWrapper = styled.div`
     width: fit-content;
   }
 `
-
-const StyledHeading = styled(Heading)`
-  font-size: 32px;
-  max-width: 176px !important;
-
-  ${({ theme }) => theme.mediaQueries.xs} {
-    font-size: 36px;
-    max-width: 240px !important;
-  }
-
-  ${({ theme }) => theme.mediaQueries.md} {
-    font-size: 44px;
-    max-width: 400px !important;
-  }
-
-  ${({ theme }) => theme.mediaQueries.xl} {
-    font-size: 60px;
-    max-width: 600px !important;
-  }
-`
-
 const StyledPage = styled(Page)`
   padding-left: 5px;
   padding-right: 5px;
@@ -272,22 +171,15 @@ const FlexLayout = styled.div`
   }
 `
 
-const AdminText = styled(Text)`
-  font-family: poppins;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-`
-
 const NfaStaking: React.FC = () => {
+  useSetNfaStakingPools()
   usePollNfaStakingData()
   const [stakedOnly, setStakedOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const { pathname } = useLocation()
   const isActive = !pathname.includes('history')
-  const size: Size = useWindowSize()
   const allNfaStakingPools = useNfaStakingPools()
-  const TranslateString = useI18n()
+  const { t } = useTranslation()
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const handleChangeQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -327,31 +219,43 @@ const NfaStaking: React.FC = () => {
 
   return (
     <>
-      <Header>
-        <HeadingContainer>
-          <StyledHeading as="h1" mb="8px" mt={0} color="white">
-            {TranslateString(999, 'NFA Staking')}
-          </StyledHeading>
-          {size.width > 968 && <AdminText>Stake your Non-Fungible Ape for profits from the auction</AdminText>}
-        </HeadingContainer>
-        <MonkeyWrapper>
-          <PoolMonkey />
-        </MonkeyWrapper>
-      </Header>
       <StyledPage width="1130px">
+        <Banner
+          banner="nfa-staking"
+          link="https://apeswap.gitbook.io/apeswap-finance/product-and-features/stake"
+          title={t('Nfa Staking Pools')}
+          maxWidth={1130}
+          margin="0 0 20px 0px"
+          titleColor="primaryBright"
+        />
+        <PaddedCard style={{ marginBottom: '20px' }}>
+          <TopCon>
+            <CenterCard>
+              <WarningHeader as="h1">{t('HEADS UP, APES!')}</WarningHeader>
+              <InnerContentText>
+                NFA Staking has ended. Learn about what`s next from{' '}
+                <a
+                  style={{ textDecoration: 'underline' }}
+                  href="https://ape-swap.medium.com/meet-apeswap-nft-2f0cf5ac6b59"
+                >
+                  ApeSwap NFT here
+                </a>
+                , including the new community wallet.
+              </InnerContentText>
+            </CenterCard>
+          </TopCon>
+        </PaddedCard>
         <ControlContainer>
           <ViewControls>
             <LabelWrapper>
-              <StyledText fontFamily="poppins" mr="15px">
-                Search
-              </StyledText>
+              <StyledText mr="15px">{t('Search')}</StyledText>
               <SearchInput onChange={handleChangeQuery} value={searchQuery} />
             </LabelWrapper>
             <ButtonCheckWrapper>
               <ToggleContainer>
                 <ToggleWrapper onClick={() => setStakedOnly(!stakedOnly)}>
                   <StyledCheckbox checked={stakedOnly} onChange={() => setStakedOnly(!stakedOnly)} />
-                  <StyledText fontFamily="poppins">{TranslateString(1116, 'Staked')}</StyledText>
+                  <StyledText>{t('Staked')}</StyledText>
                 </ToggleWrapper>
               </ToggleContainer>
             </ButtonCheckWrapper>

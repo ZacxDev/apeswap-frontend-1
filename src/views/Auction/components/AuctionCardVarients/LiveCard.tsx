@@ -29,10 +29,10 @@ const Card = styled.div<CardProps>`
   width: 354px;
   height: ${(props) => (props.expanded ? '825px' : '625px')};
   border-radius: 10px;
-  background: ${({ theme }) => theme.colors.card};
+  background: ${({ theme }) => theme.colors.navbar};
   box-shadow: 5px 4px 8px rgba(0, 0, 0, 0.1), inset 355px 4px 250px rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(24px);
-  margin-bottom: 100px;
+  margin-bottom: 30px;
   box-shadow: ${(props) => props.highestBidFlag && '0px 0px 20px #ffb300'};
   ${({ theme }) => theme.mediaQueries.lg} {
     height: 450px;
@@ -78,9 +78,9 @@ const HighestBidder = styled.div`
 `
 
 const LiveCard: React.FC<LiveCardProps> = ({ auction, minIncrementAmount, minIncrementPercentage }) => {
-  const { isXl } = useMatchBreakpoints()
+  const { isXxl, isXl } = useMatchBreakpoints()
   const [expanded, setExpanded] = useState(false)
-  const isDesktop = isXl
+  const isDesktop = isXxl || isXl
   const { nfa, highestBid, highestBidder } = auction
   const { account } = useWeb3React()
   const highestBidFlag = highestBidder === account

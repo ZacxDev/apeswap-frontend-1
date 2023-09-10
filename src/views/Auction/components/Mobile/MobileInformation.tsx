@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Text, ArrowDropDownIcon, ArrowDropUpIcon } from '@apeswapfinance/uikit'
+import { useTranslation } from 'contexts/Localization'
 
 interface MobileInformationProps {
   expanded: boolean
@@ -19,19 +20,19 @@ const DropDownWrapper = styled.div`
 `
 
 const MoreInformation = styled(Text)`
-  font-family: Poppins;
   font-style: normal;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 15px;
   letter-spacing: 0.05em;
   padding-right: 10px;
 `
 
 const MobileInformation: React.FC<MobileInformationProps> = ({ onClick, expanded }) => {
+  const { t } = useTranslation()
   return (
     <>
       <DropDownWrapper onClick={() => onClick()}>
-        <MoreInformation>Information</MoreInformation>
+        <MoreInformation>{t('Information')}</MoreInformation>
         {expanded ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />}
       </DropDownWrapper>
     </>

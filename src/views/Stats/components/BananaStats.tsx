@@ -1,14 +1,15 @@
 import React, { useMemo } from 'react'
-import { Card, CardBody, Heading, Text } from '@apeswapfinance/uikit'
+import { Card, Heading, Text } from '@apeswapfinance/uikit'
 import styled from 'styled-components'
 import { Stats } from 'state/types'
-import useI18n from 'hooks/useI18n'
-import { usePriceBananaBusd } from 'state/hooks'
+import { usePriceBananaBusd } from 'state/tokenPrices/hooks'
+import { Box } from 'theme-ui'
 import useTokenBalance from 'hooks/useTokenBalance'
 import { useGoldenBananaAddress } from 'hooks/useAddress'
 import { getFullDisplayBalance } from 'utils/formatBalance'
 import CardValue from './CardValue'
 import Divider from './Divider'
+import { useTranslation } from '../../../contexts/Localization'
 
 export interface BananaStatsProps {
   stats?: Stats
@@ -28,7 +29,7 @@ const Row = styled.div`
 `
 
 const BananaStats: React.FC<BananaStatsProps> = ({ stats }) => {
-  const TranslateString = useI18n()
+  const { t } = useTranslation()
   const price = usePriceBananaBusd()
   const goldenBananaBalance = useTokenBalance(useGoldenBananaAddress())
 
@@ -38,62 +39,138 @@ const BananaStats: React.FC<BananaStatsProps> = ({ stats }) => {
 
   return (
     <StyledBananaStats>
-      <CardBody>
-        <Heading size="xl" mb="24px">
-          {TranslateString(534, 'Your Ape Stats')}
-        </Heading>
+      <Box>
+        <Heading>{t('Your Ape Stats')}</Heading>
         <Row>
-          <Text fontSize="14px">{TranslateString(536, 'TVL All Pools')}</Text>
+          <Text fontWeight={800} fontSize="14px">
+            {t('TVL All Pools')}
+          </Text>
           <CardValue fontSize="14px" decimals={2} value={stats.tvl} prefix="$" />
         </Row>
         <Row>
-          <Text fontSize="14px">{TranslateString(536, 'GNANA Holdings')}</Text>
-          <CardValue fontSize="14px" value={parseFloat(fullBalance)} decimals={2} />
+          <Text fontWeight={800} fontSize="14px">
+            {t('GNANA Holdings')}
+          </Text>
+          <CardValue fontWeight={800} fontSize="14px" value={parseFloat(fullBalance)} decimals={2} />
         </Row>
         <Row>
-          <Text fontSize="14px">{TranslateString(536, 'BANANA Price')}</Text>
-          <CardValue fontSize="14px" value={price.toNumber()} decimals={2} prefix="$" />
+          <Text fontWeight={800} fontSize="14px">
+            {t('BANANA Price')}
+          </Text>
+          <CardValue fontWeight={800} fontSize="14px" value={price.toNumber()} decimals={2} prefix="$" />
         </Row>
         <Row style={{ alignItems: 'flex-start' }}>
-          <Text fontSize="14px">{TranslateString(538, 'Your BANANA earnings ($)')}</Text>
-          <Text fontSize="14px" style={{ textAlign: 'end' }}>
+          <Text fontWeight={800} fontSize="14px">
+            {t('Your BANANA earnings ($)')}
+          </Text>
+          <Text fontWeight={800} fontSize="14px" style={{ textAlign: 'end' }}>
             <Divider />
-            <CardValue fontSize="14px" value={stats.bananasEarnedPerDay} decimals={2} prefix="Daily: " />
-            <CardValue fontSize="12px" value={stats.dollarsEarnedPerDay} decimals={2} prefix="($" suffix=")" />
+            <CardValue
+              fontWeight={800}
+              fontSize="14px"
+              value={stats.bananasEarnedPerDay}
+              decimals={2}
+              prefix="Daily: "
+            />
+            <CardValue
+              fontWeight={800}
+              fontSize="12px"
+              value={stats.dollarsEarnedPerDay}
+              decimals={2}
+              prefix="($"
+              suffix=")"
+            />
             <Divider />
-            <CardValue fontSize="14px" value={stats.bananasEarnedPerWeek} decimals={2} prefix="Weekly: " />
-            <CardValue fontSize="12px" value={stats.dollarsEarnedPerWeek} decimals={2} prefix="($" suffix=")" />
+            <CardValue
+              fontWeight={800}
+              fontSize="14px"
+              value={stats.bananasEarnedPerWeek}
+              decimals={2}
+              prefix="Weekly: "
+            />
+            <CardValue
+              fontWeight={800}
+              fontSize="12px"
+              value={stats.dollarsEarnedPerWeek}
+              decimals={2}
+              prefix="($"
+              suffix=")"
+            />
             <Divider />
-            <CardValue fontSize="14px" value={stats.bananasEarnedPerMonth} decimals={2} prefix="Monthly: " />
-            <CardValue fontSize="12px" value={stats.dollarsEarnedPerMonth} decimals={2} prefix="($" suffix=")" />
+            <CardValue
+              fontWeight={800}
+              fontSize="14px"
+              value={stats.bananasEarnedPerMonth}
+              decimals={2}
+              prefix="Monthly: "
+            />
+            <CardValue
+              fontWeight={800}
+              fontSize="12px"
+              value={stats.dollarsEarnedPerMonth}
+              decimals={2}
+              prefix="($"
+              suffix=")"
+            />
             <Divider />
-            <CardValue fontSize="14px" value={stats.bananasEarnedPerYear} decimals={2} prefix="Yearly: " />
-            <CardValue fontSize="12px" value={stats.dollarsEarnedPerYear} decimals={2} prefix="($" suffix=")" />
+            <CardValue
+              fontWeight={800}
+              fontSize="14px"
+              value={stats.bananasEarnedPerYear}
+              decimals={2}
+              prefix="Yearly: "
+            />
+            <CardValue
+              fontWeight={800}
+              fontSize="12px"
+              value={stats.dollarsEarnedPerYear}
+              decimals={2}
+              prefix="($"
+              suffix=")"
+            />
             <Divider />
           </Text>
         </Row>
         <Row style={{ alignItems: 'flex-start' }}>
-          <Text fontSize="14px">{TranslateString(538, 'Your APR (%)')}</Text>
-          <Text fontSize="14px" style={{ textAlign: 'end' }}>
-            <CardValue fontSize="14px" value={stats.aggregateAprPerDay * 100} decimals={2} prefix="Daily" suffix="%" />
+          <Text fontWeight={800} fontSize="14px">
+            {t('Your APR (%)')}
+          </Text>
+          <Text fontWeight={800} fontSize="14px" style={{ textAlign: 'end' }}>
             <CardValue
+              fontWeight={800}
+              fontSize="14px"
+              value={stats.aggregateAprPerDay * 100}
+              decimals={2}
+              prefix={t('Daily')}
+              suffix="%"
+            />
+            <CardValue
+              fontWeight={800}
               fontSize="14px"
               value={stats.aggregateAprPerWeek * 100}
               decimals={2}
-              prefix="Weekly"
+              prefix={t('Weekly')}
               suffix="%"
             />
             <CardValue
+              fontWeight={800}
               fontSize="14px"
               value={stats.aggregateAprPerMonth * 100}
               decimals={2}
-              prefix="Monthly"
+              prefix={t('Monthly')}
               suffix="%"
             />
-            <CardValue fontSize="14px" value={stats.aggregateApr * 100} decimals={2} prefix="Yearly" suffix="%" />
+            <CardValue
+              fontWeight={800}
+              fontSize="14px"
+              value={stats.aggregateApr * 100}
+              decimals={2}
+              prefix={t('Yearly')}
+              suffix="%"
+            />
           </Text>
         </Row>
-      </CardBody>
+      </Box>
     </StyledBananaStats>
   )
 }

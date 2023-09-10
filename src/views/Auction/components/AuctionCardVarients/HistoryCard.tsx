@@ -3,10 +3,10 @@ import styled from 'styled-components'
 import { getBalanceNumber } from 'utils/formatBalance'
 import { useWeb3React } from '@web3-react/core'
 import { Auction } from 'state/types'
-import { usePriceBnbBusd } from 'state/hooks'
 import { ZERO_ADDRESS } from 'config'
 import { Text } from '@apeswapfinance/uikit'
 import BigNumber from 'bignumber.js'
+import { useTranslation } from 'contexts/Localization'
 import Image from '../../../Nft/components/Image'
 
 interface HistoryCardProps {
@@ -22,7 +22,7 @@ const Card = styled.div<CardProps>`
   height: 435px;
   border-radius: 10px;
   opacity: 0.7;
-  background-color: ${({ theme }) => theme.colors.card};
+  background-color: ${({ theme }) => theme.colors.navbar};
   display: flex;
   align-items: center;
   box-shadow: ${(props) => props.highestBidFlag && '0px 0px 20px #ffb300'};
@@ -68,6 +68,8 @@ const BoughtText = styled(Text)`
   position: absolute;
   top: 36px;
   font-size: 25px;
+  font-weight: 800;
+
   ${({ theme }) => theme.mediaQueries.lg} {
     top: 30px;
     font-size: 20px;
@@ -78,6 +80,8 @@ const NameText = styled(Text)`
   position: absolute;
   top: 8px;
   font-size: 25px;
+  font-weight: 800;
+
   ${({ theme }) => theme.mediaQueries.lg} {
     top: 0px;
     font-size: 20px;
@@ -88,18 +92,17 @@ const BidAmount = styled(Text)`
   position: absolute;
   top: 70px;
   font-size: 20px;
-  font-family: Poppins;
   font-style: normal;
-  font-weight: 900;
+  font-weight: 600;
   ${({ theme }) => theme.mediaQueries.lg} {
   }
 `
 
+/*
 const CurrentBidDollarWrapper = styled(Text)`
   position: absolute;
-  font-family: Poppins;
   font-style: normal;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 10px;
   line-height: 15px;
   margin-top: 10px;
@@ -108,6 +111,7 @@ const CurrentBidDollarWrapper = styled(Text)`
   letter-spacing: 0.05em;
   color: #38a611;
 `
+*/
 
 const HighestBidder = styled.div`
   position: absolute;
@@ -133,24 +137,20 @@ const HistoryCard: React.FC<HistoryCardProps> = ({ auction }) => {
   const highestBidFlag = highestBidder === account
   const notSold = highestBidder === ZERO_ADDRESS
   const rawBidAmount = getBalanceNumber(new BigNumber(highestBid))
-  const bnbPrice = usePriceBnbBusd()
-  const dollarValue = (getBalanceNumber(bnbPrice, 0) * rawBidAmount).toFixed(2)
-
+  const { t } = useTranslation()
   return (
     <Card highestBidFlag={highestBidFlag}>
       <TextHolder>
         <NameText>#{nfa.index}</NameText>
         {notSold ? (
           <>
-            <BoughtText>Did Not Sell</BoughtText>
-            <BidAmount>Ask {rawBidAmount.toFixed(3)} BNB</BidAmount>
-            <CurrentBidDollarWrapper>~${dollarValue}</CurrentBidDollarWrapper>
+            <BoughtText>{t('Did Not Sell')}</BoughtText>
+            <BidAmount>{t('Ask %amount% BNB', { amount: rawBidAmount.toFixed(3) })}</BidAmount>
           </>
         ) : (
           <>
-            <BoughtText>Bought For</BoughtText>
+            <BoughtText>{t('Bought For')}</BoughtText>
             <BidAmount> {rawBidAmount.toFixed(3)} BNB</BidAmount>
-            <CurrentBidDollarWrapper>~${dollarValue}</CurrentBidDollarWrapper>
           </>
         )}
       </TextHolder>

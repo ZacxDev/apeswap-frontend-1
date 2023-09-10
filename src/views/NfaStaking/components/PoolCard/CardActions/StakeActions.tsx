@@ -1,14 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
-import useI18n from 'hooks/useI18n'
+import { useTranslation } from 'contexts/Localization'
 import { NfaStakingPool } from 'state/types'
-import { Flex, Heading, useModal, Text, ButtonSquare } from '@apeswapfinance/uikit'
+import { Flex, Heading, useModal, Text, Button, MinusIcon, AddIcon, IconButton } from '@apeswapfinance/uikit'
 import BigNumber from 'bignumber.js'
 import { getBalanceNumber } from 'utils/formatBalance'
 import { useNfaStake } from 'hooks/useStake'
-// import { useNfaUnstake } from 'hooks/useUnstake'
+import { useNfaUnstake } from 'hooks/useUnstake'
 import DepositModal from '../../DepositModal'
-// import WithdrawModal from '../../WithdrawModal'
+import WithdrawModal from '../../WithdrawModal'
 
 interface StakeActionsProps {
   pool: NfaStakingPool
@@ -27,14 +27,14 @@ const IconButtonWrapper = styled.div`
   display: flex;
 `
 
-// const StyledIconButtonSquare = styled(IconButtonSquare)`
-//   width: 34px;
-//   height: 34px;
-// `
-
+const StyledIconButton = styled(IconButton)`
+  width: 34px;
+  height: 34px;
+`
 const StyledHeadingGreen = styled(Heading)`
   font-size: 14px;
   color: #38a611;
+  font-weight: 800;
 
   ${({ theme }) => theme.mediaQueries.sm} {
     font-size: 20px;
@@ -43,7 +43,7 @@ const StyledHeadingGreen = styled(Heading)`
 `
 
 const StyledText = styled(Text)`
-  font-weight: bold;
+  font-weight: 600;
   font-size: 12px;
 `
 
@@ -51,19 +51,25 @@ const StyledFlex = styled(Flex)`
   width: 100%;
   margin-left: 117px;
   margin-right: 35px;
+
   ${({ theme }) => theme.mediaQueries.md} {
     margin-left: 217px;
   }
 `
 
-const WhyCantIBid = styled.a`
-  color: ${(props) => props.theme.colors.text};
-  bottom: 0px;
-  text-decoration: underline;
+const StyledButton = styled(Button)`
+  font-weight: 600;
 `
 
-const StakeAction: React.FC<StakeActionsProps> = ({ pool, stakedBalance, isApproved, firstStake, tier }) => {
-  const TranslateString = useI18n()
+const StakeAction: React.FC<StakeActionsProps> = ({
+  pool,
+  stakedBalance,
+  isApproved,
+  firstStake,
+  tier,
+  stakedNfas,
+}) => {
+  const { t } = useTranslation()
 
   const { sousId } = pool
 
@@ -71,7 +77,7 @@ const StakeAction: React.FC<StakeActionsProps> = ({ pool, stakedBalance, isAppro
   const displayBalance = rawStakedBalance.toLocaleString()
 
   const { onStake } = useNfaStake(sousId)
-  // const onUnstake = useNfaUnstake(sousId).onUnstake
+  const { onUnstake } = useNfaUnstake(sousId)
 
   const [onPresentDeposit] = useModal(
     <DepositModal
@@ -82,25 +88,25 @@ const StakeAction: React.FC<StakeActionsProps> = ({ pool, stakedBalance, isAppro
     />,
   )
 
-  // const [onPresentWithdraw] = useModal(
-  //   <WithdrawModal
-  //     onConfirm={async (val) => {
-  //       await onUnstake(val)
-  //     }}
-  //     stakedNfas={stakedNfas}
-  //   />,
-  // )
+  const [onPresentWithdraw] = useModal(
+    <WithdrawModal
+      onConfirm={async (val) => {
+        await onUnstake(val)
+      }}
+      stakedNfas={stakedNfas}
+    />,
+  )
 
   const renderStakingButtons = () => {
     return (
       rawStakedBalance !== 0 && (
         <IconButtonWrapper>
-          {/* <StyledIconButtonSquare onClick={onPresentWithdraw} mr="6px">
+          <StyledIconButton onClick={onPresentWithdraw} mr="6px">
             <MinusIcon color="white" width="12px" height="12px" />
-          </StyledIconButtonSquare> */}
-          {/* <StyledIconButtonSquare onClick={onPresentDeposit}>
+          </StyledIconButton>
+          <StyledIconButton onClick={onPresentDeposit}>
             <AddIcon color="white" width="16px" height="16px" />
-          </StyledIconButtonSquare> */}
+          </StyledIconButton>
           <></>
         </IconButtonWrapper>
       )
@@ -108,24 +114,17 @@ const StakeAction: React.FC<StakeActionsProps> = ({ pool, stakedBalance, isAppro
   }
 
   if (firstStake) {
-    return <ButtonSquare onClick={onPresentDeposit}>{TranslateString(999, `Stake NFA`)}</ButtonSquare>
+    return <StyledButton onClick={onPresentDeposit}>{t('STAKE NFA')}</StyledButton>
   }
 
   return (
     <StyledFlex justifyContent="space-between" alignItems="center" mt="5px">
       <Flex flexDirection="column" alignItems="flex-start" marginRight="6px">
-        <StyledText fontFamily="poppins">{TranslateString(999, 'Staked')}</StyledText>
+        <StyledText>{t('Staked')}</StyledText>
         <StyledHeadingGreen color={rawStakedBalance === 0 ? 'textDisabled' : 'text'}>
           {displayBalance}
         </StyledHeadingGreen>
       </Flex>
-      <WhyCantIBid
-        href="https://ape-swap.medium.com/non-fungible-apes-the-great-primate-migration-3a087c3f4e26"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Why Cant I Unstake?
-      </WhyCantIBid>
       {isApproved && renderStakingButtons()}
     </StyledFlex>
   )

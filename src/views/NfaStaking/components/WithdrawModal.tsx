@@ -2,9 +2,10 @@ import React, { useState } from 'react'
 import { Button, Modal, AutoRenewIcon, Text } from '@apeswapfinance/uikit'
 import Image from 'views/Nft/components/Image'
 import styled from 'styled-components'
-import Nfts from 'config/constants/nfts'
+import { useFetchNfas, useNfas } from 'state/hooks'
 import ModalActions from 'components/ModalActions'
-import useI18n from '../../../hooks/useI18n'
+import { useTranslation } from 'contexts/Localization'
+import UnderlinedButton from 'components/UnderlinedButton'
 
 interface WithdrawModalProps {
   onConfirm: (amount: number[]) => void
@@ -37,10 +38,12 @@ const Nfa = styled.div<{ active: boolean }>`
 `
 
 const WithdrawModal: React.FC<WithdrawModalProps> = ({ onConfirm, onDismiss, stakedNfas }) => {
-  const TranslateString = useI18n()
+  useFetchNfas()
   const [selectedNfas, setSelectedNfas] = useState([])
   const [pendingTx, setPendingTx] = useState(false)
-  const mappedNfas = Nfts.filter((nfa) => stakedNfas.includes(nfa.index))
+  const { t } = useTranslation()
+  const { nfas } = useNfas()
+  const mappedNfas = nfas?.filter((nfa) => stakedNfas.includes(nfa.index))
 
   const handleNfaChange = (index) => {
     if (selectedNfas.includes(index)) {
@@ -51,9 +54,9 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ onConfirm, onDismiss, sta
   }
 
   return (
-    <Modal title="Withdraw NFAs" onDismiss={onDismiss}>
+    <Modal title={t('Withdraw NFAs')} onDismiss={onDismiss}>
       <Text marginBottom="20px">
-        NFAs Selected:
+        {t('NFAs Selected')}:
         {selectedNfas.map((index) => {
           return ` ${index},`
         })}
@@ -62,19 +65,16 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ onConfirm, onDismiss, sta
         {mappedNfas.length !== 0 ? (
           mappedNfas?.map((nfa) => {
             return (
-              <Nfa onClick={() => handleNfaChange(nfa.index)} active={selectedNfas.includes(nfa.index)}>
+              <Nfa onClick={() => handleNfaChange(nfa.index)} active={selectedNfas.includes(nfa.index)} key={nfa.index}>
                 <Image src={nfa.image} alt={nfa.name} rarityTier={nfa.attributes.rarityTierNumber} />
               </Nfa>
             )
           })
         ) : (
-          <Text marginBottom="20px">You do not have any NFAs staked 😢</Text>
+          <Text marginBottom="20px">{t('You do not have any NFAs staked')} 😢</Text>
         )}
       </OwnedNfaWrapper>
       <ModalActions>
-        <Button fullWidth variant="secondary" onClick={onDismiss}>
-          {TranslateString(462, 'Cancel')}
-        </Button>
         <Button
           fullWidth
           disabled={pendingTx || selectedNfas.length === 0}
@@ -85,9 +85,13 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ onConfirm, onDismiss, sta
             onDismiss()
           }}
           endIcon={pendingTx && <AutoRenewIcon spin color="currentColor" />}
+          style={{
+            borderRadius: '10px',
+          }}
         >
-          {pendingTx ? TranslateString(488, 'Pending Confirmation') : TranslateString(464, 'Confirm')}
+          {pendingTx ? t('Pending Confirmation') : t('Confirm')}
         </Button>
+        <UnderlinedButton text={t('Cancel')} handleClick={onDismiss} />
       </ModalActions>
     </Modal>
   )
